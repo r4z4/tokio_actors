@@ -1,0 +1,82 @@
+<!-- <html>
+  <head>
+    <title>Login</title>
+  </head>
+
+  <body>
+    {% if let Some(message) = message %}
+    <span><strong>{{ message }}</strong></span>
+    {% endif %}
+
+    <h1 class="main_header">Login</h1>
+
+    <form method="post">
+      <fieldset>
+        <legend>User login</legend>
+        <p>
+          <label for="username">Username</label>
+          <input name="username" id="username" value="aaron" />
+        </p>
+        <p>
+          <label for="password">Password</label>
+          <input
+            name="password"
+            id="password"
+            type="password"
+            value="password"
+          />
+        </p>
+      </fieldset>
+
+      <input type="submit" value="login" />
+
+      {% if let Some(next) = next %}
+      <input type="hidden" name="next" value="{{next}}" />
+      {% endif %}
+    </form>
+  </body>
+</html> -->
+
+
+{% extends "base.html" %}
+
+{% block title %}Protected{% endblock %}
+
+{% block head %}
+  <style>
+  </style>
+{% endblock %}
+
+{% block content %}
+  {% if let Some(message) = message %}
+  <span><strong>{{ message }}</strong></span>
+  {% endif %}
+
+  <h1 class="main_header">Login</h1>
+
+  <form method="post">
+    <fieldset>
+      <legend>User login</legend>
+      <p>
+        <label for="username">Username</label>
+        <input name="username" id="username" value="aaron" />
+      </p>
+      <p>
+        <label for="password">Password</label>
+        <input
+          name="password"
+          id="password"
+          type="password"
+          value="password"
+        />
+      </p>
+    </fieldset>
+
+    <input type="submit" value="login" />
+
+    {% if let Some(next) = next %}
+    <input type="hidden" name="next" value="{{next}}" />
+    {% endif %}
+  </form>
+  {% call super() %}
+{% endblock %}

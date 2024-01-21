@@ -1,0 +1,114 @@
+<!-- <html>
+  <head>
+    <title>Protected</title>
+  </head>
+
+  <body>
+    <div>
+      <p>Logged in as {{username}}</p>
+    </div>
+    <div>
+      <h1>Tokio Actors</h1>
+      <p>Welcome to Tokio Actors</p>
+    </div>
+    <div><a href="/logout">Logout</a></div>
+  </body>
+</html> -->
+
+{% extends "base.html" %}
+
+{% block title %}Protected{% endblock %}
+
+{% block head %}
+  <style>
+  </style>
+{% endblock %}
+
+{% block nav %}
+  {% if let Some(user) = user %}
+    <li class="dropdown">
+      <a href="javascript:void(0)" class="dropbtn">{{user.username}}</a>
+      <div class="dropdown-content">
+        <a href="/logout">Logout</a>
+      </div>
+    </li>
+  {% else %}
+    <div><a href="/login">Login</a></div>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <div>
+    <p>Logged in as {{username}}</p>
+  </div>
+  <div>
+    <h1>Tokio Actors</h1>
+    <p>Welcome to Tokio Actors</p>
+  </div>
+
+  <button id="get_all">
+    Get All Offers
+  </button>
+  <button id="get_ticker" hx-get="/ticker" hx-swap="innerHTML" hx-target="#ticker_data">
+    Get Ticker
+  </button>
+
+  <div id="ticker_data"></div>
+
+  <div class="grid_wrap">
+
+    <div>
+      <h5>Number One</h5>
+      <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_one" hx-trigger="click, click from:#get_all">
+        Get Offers Number 1
+      </button>
+      <div id="lender_offers_one"></div>
+    </div>
+    
+    <div>
+      <h5>Number Two</h5>
+      <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_two" hx-trigger="click, click from:#get_all">
+        Get Offers Number 2
+      </button>
+      <div id="lender_offers_two"></div>
+    </div>
+
+    <div>
+      <h5>Number Three</h5>
+      <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_three" hx-trigger="click, click from:#get_all">
+        Get Offers Number 3
+      </button>
+      <div id="lender_offers_three"></div>
+    </div>
+
+    <div>
+      <h5>Number Four</h5>
+      <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_four" hx-trigger="click, click from:#get_all">
+        Get Offers Number 4
+      </button>
+      <div id="lender_offers_four"></div>
+    </div>
+    
+    <div>
+      <h5>Number Five</h5>
+      <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_five" hx-trigger="click, click from:#get_all">
+        Get Offers Number 5
+      </button>
+      <div id="lender_offers_five"></div>
+    </div>
+
+    <div>
+      <h5>Number Six</h5>
+      <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_six" hx-trigger="click, click from:#get_all">
+        Get Offers Number 6
+      </button>
+      <div id="lender_offers_six"></div>
+    </div>
+
+  </div>
+
+  <div><a href="/logout">Logout</a></div>
+
+  </div>
+  {% call super() %}
+{% endblock %}

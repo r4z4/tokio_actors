@@ -1,0 +1,338 @@
+use std::{net::SocketAddr, collections::HashMap, sync::Arc, env};
+use askama::Template;
+use serde_json::json;
+use ::time::Duration;
+use axum::{
+    routing::{get, post},
+    http::{StatusCode, Request, Uri},
+    Json, Router, debug_handler, extract::{Query, State, ConnectInfo}, Extension, response::{IntoResponse, Response}, body::Body,
+};
+use axum_login::{
+    login_required,
+    tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer, PostgresStore},
+    AuthManagerLayerBuilder,
+};
+use axum::http::{
+    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
+    HeaderValue, Method,
+};
+use sendgrid::error::SendgridError;
+use sendgrid::v3::*;
+use models::auth::User;
+use serde::{Deserialize, Serialize};
+use tokio::{sync::oneshot, io::{AsyncRead, AsyncWrite}};
+use crate::{actors::actor::{self, Actor, CreateActor, ActorResponse, ActorHandle, ActorMessage}, error::AppError, models::{self, store::new_db_pool, payment::CreditCardApiResp, auth::{CurrentUser, CurrentUserOpt}}, users::{Backend, AuthSession}, web::{protected, auth, ws::read_and_send_messages}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}};
+use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::FromRow;
+use sqlx::types::time::Date;
+use tower_http::{cors::{Any, CorsLayer}, services::ServeDir};
+use tower_http::trace::{self, TraceLayer};
+use tracing::Level;
+
+use futures_util::{SinkExt as _, StreamExt as _, stream::{SplitSink, SplitStream}};
+use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream};
+
+// mod errors;
+// mod handlers;
+// mod infra;
+// mod routes;
+
+#[derive(Clone)]
+pub struct AppState {
+    name: Option<String>,
+    actor_handle: ActorHandle,
+}
+
+pub struct App {
+    pool: PgPool,
+}
+
+#[derive(Debug, Template)]
+#[template(path = "users.html")]
+pub struct UsersTemplate<'a> {
+    pub users: &'a Vec<User>,
+    pub message: Option<String>,
+    pub user: Option<CurrentUser>,
+}
+
+#[derive(Debug, Template)]
+#[template(path = "post.html")]
+pub struct PostTemplate<'a> {
+    pub post_title: &'a str,
+    pub post_date: String,
+    pub post_body: &'a str,
+    pub user: Option<CurrentUser>,
+}
+
+impl App {
+    pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        dotenv::dotenv().ok();
+
+        // let db_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
+        // let pool = PgPoolOptions::new()
+        //     .max_connections(5)
+        //     // use your own credentials
+        //     .connect(&db_url)
+        //     .await
+        //     .expect("Unable to connect to DB");
+        // sqlx::migrate!().run(&pool).await?;
+        let pool = new_db_pool().await?;
+        let current_user = None::<CurrentUser>;
+
+        Ok(Self { pool })
+    }
+        
+        // collects the arguments when we run:
+        // cargo run --bin markd "A title" ./post.md
+        // et args: Vec<String> = env::args().collect();
+            
+        // // initialize tracing
+        // tracing_subscriber::fmt()
+        //     .with_target(false)
+        //     // .compact()
+        //     .json()
+        //     .init();
+    pub async fn serve(self) -> Result<(), Box<dyn std::error::Error>> {
+        // println!("Serve");
+        // let cors = CorsLayer::new().allow_origin(Any);
+
+        let cors = CorsLayer::new()
+            .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+            .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
+            .allow_credentials(true)
+            .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
+
+        let random_data_base = "https://random-data-api.com/api/v2/";
+        let entity = "credit_cards";
+
+        let url = random_data_base.to_owned() + entity;
+
+        let resp = reqwest::get(url)
+            .await?
+            .json::<CreditCardApiResp>()
+            .await?;
+
+        dbg!(resp);
+
+        // tokio::spawn(async move {
+        //     let resp = reqwest_client.request(req).await;
+        // });
+
+        // let url = "wss://echo.websocket.events";
+        // let kraken = "wss://ws.kraken.com/";
+
+        // println!("Connecting to - {}", kraken);
+        // let (ws_stream, _) = connect_async(kraken).await.expect("Failed to connect");
+        // println!("Connected to Network");
+        // let (mut write, mut read) = ws_stream.split();
+        // // let msg = Message::Text("aloha echo server".into());
+        // let read_handle = tokio::spawn(handle_incoming_messages(read));
+        // // To connect to stdin
+        // // let write_handle = tokio::spawn(read_and_send_messages(write));
+        // // let _ = subscribe_to(&mut write);
+        // let subscribe_msg = Message::Text(json!({
+        //     "event": "subscribe",
+        //     "pair": ["XBT/USD"],
+        //     "subscription": json!({"name": "*"})
+        //   }).to_string());
+        // println!("Sending message - {}", subscribe_msg);
+        // write.send(subscribe_msg).await.expect("Failed to send message");
+        // let _ = tokio::try_join!(read_handle);
+
+        let actor_handle = ActorHandle::new();
+        let msg = ActorMessage::RegularMessage { text: "Hey from Main".to_owned() };
+        let _ = actor_handle.sender.send(msg).await;
+
+        let state = AppState { name: None, actor_handle: actor_handle.clone() };
+
+        let offer_handle = ActorHandle::new();
+        let (send, recv) = oneshot::channel();
+        let offer_msg = ActorMessage::GetOffers {respond_to: Some(send), offers: None };
+        let _ = offer_handle.sender.send(offer_msg).await;
+        let resp = recv.await.expect("Actor task has been killed");
+        dbg!(resp);
+        // let _ = tokio::try_join!(read_handle, write_handle);
+
+        // let mut cool_header = HashMap::with_capacity(2);
+        // cool_header.insert(String::from("x-cool"), String::from("indeed"));
+        // cool_header.insert(String::from("x-cooler"), String::from("cold"));
+    
+        // // Personalization = Destination addr
+        // let p = Personalization::new(Email::new("ar3rz3@gmail.com")).add_headers(cool_header);
+    
+        // // Create a new message from SendGrid Identity (From addr)
+        // let m = sendgrid::v3::Message::new(Email::new("r4z4aa@gmail.com"))
+        //     .set_subject("Subject")
+        //     .add_content(
+        //         Content::new()
+        //             .set_content_type("text/html")
+        //             .set_value("Test from Rust"),
+        //     )
+        //     .add_personalization(p);
+    
+        // let mut env_vars = ::std::env::vars();
+        // let api_key = env_vars.find(|v| v.0 == "SENDGRID_API_KEY").unwrap();
+        // let sender = Sender::new(api_key.1);
+        // let resp = sender.send(&m).await?;
+        // println!("status: {}", resp.status());
+
+        let session_store = PostgresStore::new(self.pool.clone());
+        session_store.migrate().await?;
+
+        let session_layer = SessionManagerLayer::new(session_store)
+            .with_secure(false)
+            .with_expiry(Expiry::OnInactivity(Duration::days(1)));
+
+        // Auth service.
+        //
+        // This combines the session layer with our backend to establish the auth
+        // service which will provide the auth session as a request extension.
+        let backend = Backend::new(self.pool.clone());
+        let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
+
+        let protected_app = protected::router()
+            .route_layer(login_required!(Backend, login_url = "/login"))
+            .route("/actor", get(get_actor))
+            .route("/users", get(get_users))
+            .route("/offers", get(get_offers))
+            .route("/ticker", get(get_ticker))
+            // `POST /users` goes to `create_user`
+            .route("/users", post(create_user))
+            .merge(auth::router())
+            .layer(auth_layer);
+        // build our application with a route
+        let app = Router::new()
+            // .route("/", get(root))
+            .merge(protected_app)
+            .layer(cors)
+            .layer(Extension(self.pool))
+            .layer(
+                TraceLayer::new_for_http()
+                    .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
+                    .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
+            )
+            .with_state(state.into())
+            .nest_service("/assets", ServeDir::new("assets"));
+            // Routes with a different state
+
+        // run our app with hyper, listening globally on port 3000
+        let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+        tracing::debug!("Listening on {}", addr);
+        // let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+        let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+        axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
+            .await
+            .unwrap();
+
+        Ok(())
+    }
+}
+
+// basic handler that responds with a static string
+async fn root() -> &'static str {
+    "Hello, World!"
+}
+
+async fn subscribe_to(write: &mut SplitSink<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>, Message>) {
+    println!("Firing Subscribe");
+    let subscribe_msg = Message::Text(json!({
+        "event": "subscribe",
+        "pair": ["XBT/USD"],
+        "subscription": json!({"name": "*"})
+      }).to_string());
+    println!("Sending message - {}", subscribe_msg);
+    write.send(subscribe_msg).await.expect("Failed to send message");
+}
+
+async fn handle_incoming_messages(mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>) {
+    while let Some(message) = read.next().await {
+        match message {
+            Ok(msg) => println!("Received a message: {}", msg),
+            Err(e) => eprintln!("Error receiving message: {}", e),
+        }
+    }
+}
+
+#[debug_handler]
+async fn get_users(
+    State(state): State<Arc<AppState>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Query(params): Query<HashMap<String,String>>,
+    auth_session: AuthSession,
+    Extension(pool): Extension<PgPool>,
+) -> Response {
+    let msg = ActorMessage::RegularMessage { text: "Hey from get_users()".to_owned() };
+    let _ = state.actor_handle.sender.send(msg).await;
+
+    let users = sqlx::query_as::<_, models::auth::User>(
+        "SELECT user_id, email, username, created_at, updated_at FROM users;"
+    )
+    .fetch_all(&pool)
+    .await
+    .map_err(|err| {
+        dbg!(err);
+        AppError::InternalServerError
+    });
+
+    let current_user = 
+        match auth_session.user {
+            Some(user) => Some(CurrentUser {username: user.username, email: user.email}),
+            _ => None,
+        };
+
+    match users {
+        // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
+        Ok(users) => UsersTemplate {users: &users, message: None, user: current_user}.into_response(),
+        Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ReturnUserObject {
+    pub username: String,
+    pub email: Option<String>,
+}
+
+#[debug_handler]
+async fn create_user(
+    // this argument tells axum to parse the request body
+    // as JSON into a `CreateUser` type
+    auth_session: AuthSession,
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<HashMap<String,String>>,
+    Json(payload): Json<CreateUser>,
+) -> (StatusCode, Json<ReturnUserObject>) {
+    // insert your application logic here
+    let user = ReturnUserObject {
+        email: None,
+        username: payload.username,
+    };
+
+    // this will be converted into a JSON response
+    // with a status code of `201 Created`
+    (StatusCode::CREATED, Json(user))
+}
+
+// the input to our `create_user` handler
+#[derive(Deserialize)]
+struct CreateUser {
+    username: String,
+}
+
+#[debug_handler]
+async fn get_actor(
+    // this argument tells axum to parse the request body
+    // as JSON into a `CreateUser` type
+    auth_session: AuthSession,
+    Extension(current_user): Extension<CurrentUserOpt>,
+    Json(payload): Json<CreateActor>,
+) -> (StatusCode, Json<ActorResponse>) {
+    // insert your application logic here
+    let resp = ActorResponse {
+        name: payload.name,
+    };
+
+    // this will be converted into a JSON response
+    // with a status code of `201 Created`
+    (StatusCode::CREATED, Json(resp))
+}
