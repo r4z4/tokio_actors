@@ -1,0 +1,15 @@
+{% block content %}
+  {% if let Some(message) = message %}
+  <span><strong>{{ message }}</strong></span>
+  {% endif %}
+  <h1 class="main_header">Application for Loan</h1>
+  <form>
+    <label for="fname">First name:</label><br>
+    <input type="text" id="first_name" name="first_name"><br>
+    <label for="lname">Last name:</label><br>
+    <input type="text" id="last_name" name="last_name">
+
+    <label for="lname">Desired Loan Amount:</label><br>
+    <input type="number" id="desired_amount" name="desired_amount">
+  </form>
+{% endblock %}

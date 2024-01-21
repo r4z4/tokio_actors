@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block head %}
+  <style>
+  </style>
+{% endblock %}
+
+{% block content %}
+  <h1>Tokio Actors</h1>
+  <p>Non Logged In Version</p>
+  <div><a href="/login">Login</a></div>
+  {% call super() %}
+{% endblock %}
