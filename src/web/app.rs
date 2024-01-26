@@ -31,6 +31,7 @@ use tracing::Level;
 
 use futures_util::{SinkExt as _, StreamExt as _, stream::{SplitSink, SplitStream}};
 use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream};
+use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 
 // mod errors;
 // mod handlers;
@@ -176,6 +177,26 @@ impl App {
         // let resp = sender.send(&m).await?;
         // println!("status: {}", resp.status());
 
+        // Allow bursts w/ up to 5 reqs per IP address & replenishes one element every two seconds
+        // Box it b/c Axum 0.6 req all Layers to be Clone & thus we need a static reference to it
+        let governor_conf = Box::new(
+            GovernorConfigBuilder::default()
+                .per_second(2)
+                .burst_size(5)
+                .finish()
+                .unwrap(),
+        );
+        let governor_limiter = governor_conf.limiter().clone();
+        let interval = std::time::Duration::from_secs(60);
+        // a separate background task to clean up
+        std::thread::spawn(move || {
+            loop {
+                std::thread::sleep(interval);
+                tracing::info!("rate limiting storage size: {}", governor_limiter.len());
+                governor_limiter.retain_recent();
+            }
+        });
+
         let session_store = PostgresStore::new(self.pool.clone());
         session_store.migrate().await?;
 
@@ -204,6 +225,10 @@ impl App {
         let app = Router::new()
             // .route("/", get(root))
             .merge(protected_app)
+            .layer(GovernorLayer {
+                // We can leak this because it is created once and then
+                config: Box::leak(governor_conf),
+            })
             .layer(cors)
             .layer(Extension(self.pool))
             .layer(
