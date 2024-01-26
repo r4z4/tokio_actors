@@ -63,6 +63,20 @@ async fn handle_message(mut read: SplitStream<WebSocketStream<impl AsyncRead + A
     }
 }
 
+async fn handle_message_template(mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>) -> axum::response::Response {
+    while let Some(message) = read.next().await {
+        match message {
+            Ok(msg) => {
+                return TickerTemplate {text: msg.to_string()}.into_response()
+            },
+            Err(e) => {
+                return TickerTemplate {text: e.to_string()}.into_response()
+            },
+        }
+    }
+    TickerTemplate {text: "Error".to_string()}.into_response()
+}
+
 async fn handle_incoming_messages(mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>) {
     while let Some(message) = read.next().await {
         match message {
