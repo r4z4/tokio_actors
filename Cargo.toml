@@ -11,6 +11,7 @@ SERVICE_WEB_FOLDER="web/"
 [dependencies]
 askama = { version = "0.12.1", features = ["with-axum", "markdown", "serde-json"] }
 askama_axum = "0.4.0"
+async-stream = "0.3.5"
 async-trait = "0.1.77"
 axum = { version = "0.7.3", features = ["macros"] }
 axum-extra = { version = "0.9.2", features = ["typed-header"] }

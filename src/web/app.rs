@@ -21,7 +21,7 @@ use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::oneshot, io::{AsyncRead, AsyncWrite}};
-use crate::{actors::actor::{self, Actor, CreateActor, ActorResponse, ActorHandle, ActorMessage}, error::AppError, models::{self, store::new_db_pool, payment::CreditCardApiResp, auth::{CurrentUser, CurrentUserOpt}}, users::{Backend, AuthSession}, web::{protected, auth, ws::read_and_send_messages}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}};
+use crate::{actors::actor::{self, Actor, CreateActor, ActorResponse, ActorHandle, ActorMessage}, error::AppError, models::{self, store::new_db_pool, payment::CreditCardApiResp, auth::{CurrentUser, CurrentUserOpt}}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use sqlx::FromRow;
 use sqlx::types::time::Date;
@@ -212,11 +212,12 @@ impl App {
         let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
 
         let protected_app = protected::router()
-            .route_layer(login_required!(Backend, login_url = "/login"))
+            //.route_layer(login_required!(Backend, login_url = "/login"))
             .route("/actor", get(get_actor))
             .route("/users", get(get_users))
             .route("/offers", get(get_offers))
             .route("/ticker", get(get_ticker))
+            .route_layer(login_required!(Backend, login_url = "/login"))
             // `POST /users` goes to `create_user`
             .route("/users", post(create_user))
             .merge(auth::router())
@@ -225,6 +226,7 @@ impl App {
         let app = Router::new()
             // .route("/", get(root))
             .merge(protected_app)
+            .merge(public::router())
             .layer(GovernorLayer {
                 // We can leak this because it is created once and then
                 config: Box::leak(governor_conf),

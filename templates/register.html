@@ -56,10 +56,14 @@
 
   <form method="post">
     <fieldset>
-      <legend>User login</legend>
+      <legend>Register</legend>
+      <p>
+        <label for="email">Email</label>
+        <input type="email" name="email" id="email" />
+      </p>
       <p>
         <label for="username">Username</label>
-        <input name="username" id="username" value="aaron" />
+        <input name="username" id="username" />
       </p>
       <p>
         <label for="password">Password</label>
@@ -67,17 +71,21 @@
           name="password"
           id="password"
           type="password"
-          value="password"
+        />
+      </p>
+      <p>
+        <label for="confirm_password">Confirm Password</label>
+        <input
+          name="confirm_password"
+          id="confirm_password"
+          type="password"
         />
       </p>
     </fieldset>
 
     <input type="submit" value="login" />
 
-    {% if let Some(next) = next %}
-    <input type="hidden" name="next" value="{{next}}" />
-    {% endif %}
   </form>
-  <div><p>No account? <a href="/register">Register here.</a></p></div>
+  <div><p>Already have an account? <a href="/login">Log in here.</a></p></div>
   {% call super() %}
 {% endblock %}

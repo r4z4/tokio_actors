@@ -53,6 +53,11 @@
     Get Ticker
   </button>
 
+  <div hx-ext="sse" sse-connect="/sse" sse-swap="message">
+    Contents of this box will be updated in real time
+    with every SSE message received from the chatroom.
+  </div>
+
   <div id="ticker_data"></div>
 
   <div class="grid_wrap">

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}About Us{% endblock %}
+
+{% block nav %}
+  {% if let Some(user) = user %}
+    <li class="crumb">{{user.username}}</li>
+    <div><a href="/logout">Logout</a></div>
+  {% else %}
+    <li class="crumb">No User</li>
+    <div><a href="/login">Login</a></div>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+  <h1 class="main_header">About Us</h1>
+
+    <p>{{msg}}</p>
+
+
+  {% call super() %}
+{% endblock %}

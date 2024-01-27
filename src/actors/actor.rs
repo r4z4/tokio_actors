@@ -32,6 +32,10 @@ pub enum ActorMessage {
         respond_to: Option<oneshot::Sender<ActorMessage>>,
         offers: Option<HashMap<i32, Vec<Offer>>>,
     },
+    GetOffersMpsc {
+        respond_to: Option<mpsc::Sender<ActorMessage>>,
+        offers: Option<HashMap<i32, Vec<Offer>>>,
+    },
     RegularMessage {
         text: String,
         // respond_to: Option<mpsc::Sender<ActorMessage>>,
@@ -113,6 +117,20 @@ impl Actor {
             },
             ActorMessage::GetOffers { respond_to, offers } => {
                 println!("GetOffers received");
+                let offers = aggregate_offers(3);
+                self.next_id += 1;
+                let seconds = rand::thread_rng().gen_range(2..7);
+                let sec_opts = [3,12];
+                let seconds = sec_opts[rand::thread_rng().gen_range(0..sec_opts.len())];
+                dbg!(seconds);
+                sleep(Duration::from_millis(seconds*1000)).await;
+                let actor_message = ActorMessage::GetOffers { respond_to: None, offers: Some(offers) };
+                if let Some(sender) = respond_to {
+                    let _ = sender.send(actor_message);
+                }
+            },
+            ActorMessage::GetOffersMpsc { respond_to, offers } => {
+                println!("GetOffersMpsc received");
                 let offers = aggregate_offers(3);
                 self.next_id += 1;
                 let seconds = rand::thread_rng().gen_range(2..7);
