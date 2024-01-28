@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use askama::Template;
 use axum::{
@@ -12,7 +12,7 @@ use serde::Deserialize;
 
 use crate::{users::{AuthSession, Credentials}, models::auth::CurrentUser};
 
-use super::AppState;
+use super::{AppState, SharedState};
 
 #[derive(Template)]
 #[template(path = "about.html")]
@@ -28,7 +28,7 @@ pub struct ContactPageTemplate {
     user: Option<CurrentUser>,
 }
 
-pub fn router() -> Router<Arc<AppState>> {
+pub fn router<'a>() -> Router<Arc<Mutex<SharedState>>> {
     Router::new()
         .route("/about", get(self::get::about_page))
         .route("/contact", get(self::get::contact_page))

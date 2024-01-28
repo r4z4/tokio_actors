@@ -53,7 +53,7 @@ fn aggregate_offers(num_lenders: i32) -> HashMap<i32, Vec<Offer>> {
     offers_map
 }
 
-fn get_mock_offers(num_offers: i32) -> Vec<Offer> {
+pub fn get_mock_offers(num_offers: i32) -> Vec<Offer> {
     // Want all same servicer
     let servicer_id = rand::thread_rng().gen_range(0..2);
     let offers =

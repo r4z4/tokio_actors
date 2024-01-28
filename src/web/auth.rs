@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use askama::Template;
 use axum::{
@@ -12,7 +12,7 @@ use serde::Deserialize;
 
 use crate::{users::{AuthSession, Credentials}, models::auth::CurrentUser};
 
-use super::AppState;
+use super::{AppState, SharedState};
 
 #[derive(Template)]
 #[template(path = "login.html")]
@@ -36,7 +36,7 @@ pub struct NextUrl {
     next: Option<String>,
 }
 
-pub fn router() -> Router<Arc<AppState>> {
+pub fn router() -> Router<Arc<Mutex<SharedState>>> {
     Router::new()
         .route("/login", post(self::post::login))
         .route("/login", get(self::get::login))
@@ -46,13 +46,15 @@ pub fn router() -> Router<Arc<AppState>> {
 }
 
 mod post {
+    use std::sync::Mutex;
+
     use axum::{extract::State, Extension};
 
     use super::*;
 
     pub async fn login(
         mut auth_session: AuthSession,
-        State(state): State<Arc<AppState>>,
+        State(state): State<Arc<Mutex<SharedState>>>,
         Form(creds): Form<Credentials>,
     ) -> impl IntoResponse {
         let user = match auth_session.authenticate(creds.clone()).await {
@@ -81,7 +83,7 @@ mod post {
 
     pub async fn register(
         mut auth_session: AuthSession,
-        State(state): State<Arc<AppState>>,
+        State(state): State<Arc<Mutex<SharedState>>>,
         Form(creds): Form<Credentials>,
     ) -> impl IntoResponse {
         let user = match auth_session.authenticate(creds.clone()).await {

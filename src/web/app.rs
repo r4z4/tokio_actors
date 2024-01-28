@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, collections::HashMap, sync::Arc, env};
+use std::{net::SocketAddr, collections::HashMap, sync::{Arc, Mutex}, env};
 use askama::Template;
 use serde_json::json;
 use ::time::Duration;
@@ -20,7 +20,7 @@ use sendgrid::error::SendgridError;
 use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
-use tokio::{sync::oneshot, io::{AsyncRead, AsyncWrite}};
+use tokio::{sync::{broadcast, oneshot}, io::{AsyncRead, AsyncWrite}};
 use crate::{actors::actor::{self, Actor, CreateActor, ActorResponse, ActorHandle, ActorMessage}, error::AppError, models::{self, store::new_db_pool, payment::CreditCardApiResp, auth::{CurrentUser, CurrentUserOpt}}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use sqlx::FromRow;
@@ -40,6 +40,14 @@ use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 
 #[derive(Clone)]
 pub struct AppState {
+    name: Option<String>,
+    actor_handle: ActorHandle,
+}
+
+#[derive(Debug)]
+pub struct SharedState {
+    pub event_tx: broadcast::Sender<String>,
+    pub event_rx: broadcast::Receiver<String>,
     name: Option<String>,
     actor_handle: ActorHandle,
 }
@@ -115,6 +123,8 @@ impl App {
 
         dbg!(resp);
 
+        let (event_tx, mut event_rx) = broadcast::channel(5000);
+
         // tokio::spawn(async move {
         //     let resp = reqwest_client.request(req).await;
         // });
@@ -144,7 +154,9 @@ impl App {
         let msg = ActorMessage::RegularMessage { text: "Hey from Main".to_owned() };
         let _ = actor_handle.sender.send(msg).await;
 
-        let state = AppState { name: None, actor_handle: actor_handle.clone() };
+        // let state = AppState { name: None, actor_handle: actor_handle.clone() };
+
+        let state = Arc::new(Mutex::new(SharedState { name: None, actor_handle: actor_handle.clone(), event_tx: event_tx, event_rx: event_rx }));
 
         let offer_handle = ActorHandle::new();
         let (send, recv) = oneshot::channel();
@@ -282,14 +294,14 @@ async fn handle_incoming_messages(mut read: SplitStream<WebSocketStream<impl Asy
 
 #[debug_handler]
 async fn get_users(
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<Mutex<SharedState>>>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Query(params): Query<HashMap<String,String>>,
     auth_session: AuthSession,
     Extension(pool): Extension<PgPool>,
 ) -> Response {
-    let msg = ActorMessage::RegularMessage { text: "Hey from get_users()".to_owned() };
-    let _ = state.actor_handle.sender.send(msg).await;
+    // let msg = ActorMessage::RegularMessage { text: "Hey from get_users()".to_owned() };
+    // let _ = state.lock().unwrap().actor_handle.sender.send(msg).await;
 
     let users = sqlx::query_as::<_, models::auth::User>(
         "SELECT user_id, email, username, created_at, updated_at FROM users;"
@@ -325,7 +337,7 @@ async fn create_user(
     // this argument tells axum to parse the request body
     // as JSON into a `CreateUser` type
     auth_session: AuthSession,
-    State(state): State<Arc<AppState>>,
+    State(state): State<Arc<Mutex<SharedState>>>,
     Query(params): Query<HashMap<String,String>>,
     Json(payload): Json<CreateUser>,
 ) -> (StatusCode, Json<ReturnUserObject>) {

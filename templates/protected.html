@@ -52,6 +52,9 @@
   <button id="get_ticker" hx-get="/ticker" hx-swap="innerHTML" hx-target="#ticker_data">
     Get Ticker
   </button>
+  <button id="trigger" hx-get="/trigger" hx-swap="innerHTML" hx-target="#ticker_data">
+    Trigger
+  </button>
 
   <div hx-ext="sse" sse-connect="/sse" sse-swap="message">
     Contents of this box will be updated in real time
