@@ -21,14 +21,14 @@ use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::{broadcast, oneshot}, io::{AsyncRead, AsyncWrite}};
-use crate::{actors::actor::{self, Actor, CreateActor, ActorResponse, ActorHandle, ActorMessage}, error::AppError, models::{self, store::new_db_pool, payment::CreditCardApiResp, auth::{CurrentUser, CurrentUserOpt}}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}};
+use crate::{actors::actor::{self, Actor, CreateActor, ActorResponse, ActorHandle, ActorMessage}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, store::new_db_pool, payment::CreditCardApiResp, auth::{CurrentUser, CurrentUserOpt}}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use sqlx::FromRow;
 use sqlx::types::time::Date;
 use tower_http::{cors::{Any, CorsLayer}, services::ServeDir};
 use tower_http::trace::{self, TraceLayer};
 use tracing::Level;
-
+use deadpool_redis::{redis::{cmd}, Pool as RedisPool};
 use futures_util::{SinkExt as _, StreamExt as _, stream::{SplitSink, SplitStream}};
 use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream};
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
@@ -54,6 +54,7 @@ pub struct SharedState {
 
 pub struct App {
     pool: PgPool,
+    r_pool: RedisPool,
 }
 
 #[derive(Debug, Template)]
@@ -86,9 +87,10 @@ impl App {
         //     .expect("Unable to connect to DB");
         // sqlx::migrate!().run(&pool).await?;
         let pool = new_db_pool().await?;
+        let r_pool = redis_connect();
         let current_user = None::<CurrentUser>;
 
-        Ok(Self { pool })
+        Ok(Self { pool, r_pool })
     }
         
         // collects the arguments when we run:
@@ -124,6 +126,25 @@ impl App {
         dbg!(resp);
 
         let (event_tx, mut event_rx) = broadcast::channel(5000);
+
+        let client = redis_client().unwrap();
+        let mut con = client.get_connection()?;
+        let mut pubsub = con.as_pubsub();
+
+        pubsub.subscribe("new_trivia_question")?;
+
+        let stream = pubsub
+            .get_message()
+            .map(|m| {
+                m.get_payload::<String>()
+                    .map_err(|e| e.to_string())
+            });
+            // .boxed();
+
+        // let _ = redis_test_data(&r_pool).await;
+    
+        // Using GlitchTip. Works with the Rust Sentry SDK
+        // let _guard = sentry::init("https://ec778decf4e94595b5a48520185298c3@app.glitchtip.com/5073");
 
         // tokio::spawn(async move {
         //     let resp = reqwest_client.request(req).await;

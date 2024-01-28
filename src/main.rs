@@ -12,6 +12,7 @@ mod controllers;
 mod error;
 mod models;
 mod config;
+mod redis_mod;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 // async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
