@@ -1,6 +1,38 @@
+html {
+	background: #343234;
+}
+
 body {
 	background: #343234;
   color:rgb(200, 211, 214);
+  width: 80%;
+  margin: auto;
+}
+
+form {
+  width: 80%;
+  margin: auto;
+}
+
+.auth fieldset {
+  text-align: center;
+}
+
+.auth input {
+  border: 2px solid #63b4ee;
+}
+
+.auth label {
+  text-align: center;
+}
+
+.auth_footer {
+  text-align: center;
+}
+
+.auth_submit {
+  text-align: center;
+  margin-top: 2%;
 }
 
 a:link {
@@ -23,6 +55,7 @@ label {
 .main_header {
     color: rgb(202, 228, 237);
     font-size: large;
+    text-align: center;
 }
 
 /* Nav */
@@ -94,4 +127,26 @@ li.dropdown {
   justify-content: space-evenly;
   height: 400px;
   align-content: center;
+}
+
+.card {
+  background-color: rgb(192, 151, 203);
+  color: white;
+  padding: 1rem;
+  height: 4rem;
+}
+
+.cards {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 600px) {
+  .cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 900px) {
+  .cards { grid-template-columns: repeat(3, 1fr); }
 }

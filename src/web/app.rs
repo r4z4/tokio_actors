@@ -127,18 +127,18 @@ impl App {
 
         let (event_tx, mut event_rx) = broadcast::channel(5000);
 
-        let client = redis_client().unwrap();
-        let mut con = client.get_connection()?;
-        let mut pubsub = con.as_pubsub();
+        // let client = redis_client().unwrap();
+        // let mut con = client.get_connection()?;
+        // let mut pubsub = con.as_pubsub();
 
-        pubsub.subscribe("new_trivia_question")?;
+        // pubsub.subscribe("new_trivia_question")?;
 
-        let stream = pubsub
-            .get_message()
-            .map(|m| {
-                m.get_payload::<String>()
-                    .map_err(|e| e.to_string())
-            });
+        // let stream = pubsub
+        //     .get_message()
+        //     .map(|m| {
+        //         m.get_payload::<String>()
+        //             .map_err(|e| e.to_string())
+        //     });
             // .boxed();
 
         // let _ = redis_test_data(&r_pool).await;

@@ -54,7 +54,7 @@
 
   <h1 class="main_header">Login</h1>
 
-  <form method="post">
+  <form class="auth" method="post">
     <fieldset>
       <legend>User login</legend>
       <p>
@@ -72,12 +72,16 @@
       </p>
     </fieldset>
 
-    <input type="submit" value="login" />
+    <div class="auth_submit">
+      <input type="submit" value="Login" />
+    </div>
 
     {% if let Some(next) = next %}
     <input type="hidden" name="next" value="{{next}}" />
     {% endif %}
   </form>
-  <div><p>No account? <a href="/register">Register here.</a></p></div>
+  <div class="auth_footer">
+    <p>No account? <a href="/register">Register here.</a></p>
+  </div>
   {% call super() %}
 {% endblock %}

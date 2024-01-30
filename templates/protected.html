@@ -63,9 +63,9 @@
 
   <div id="ticker_data"></div>
 
-  <div class="grid_wrap">
+  <div class="cards">
 
-    <div>
+    <div class="card">
       <h5>Number One</h5>
       <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_one" hx-trigger="click, click from:#get_all">
         Get Offers Number 1
@@ -73,7 +73,7 @@
       <div id="lender_offers_one"></div>
     </div>
     
-    <div>
+    <div class="card">
       <h5>Number Two</h5>
       <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_two" hx-trigger="click, click from:#get_all">
         Get Offers Number 2
@@ -81,7 +81,7 @@
       <div id="lender_offers_two"></div>
     </div>
 
-    <div>
+    <div class="card">
       <h5>Number Three</h5>
       <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_three" hx-trigger="click, click from:#get_all">
         Get Offers Number 3
@@ -89,7 +89,7 @@
       <div id="lender_offers_three"></div>
     </div>
 
-    <div>
+    <div class="card">
       <h5>Number Four</h5>
       <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_four" hx-trigger="click, click from:#get_all">
         Get Offers Number 4
@@ -97,7 +97,7 @@
       <div id="lender_offers_four"></div>
     </div>
     
-    <div>
+    <div class="card">
       <h5>Number Five</h5>
       <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_five" hx-trigger="click, click from:#get_all">
         Get Offers Number 5
@@ -105,9 +105,14 @@
       <div id="lender_offers_five"></div>
     </div>
 
-    <div>
+    <div class="card">
       <h5>Number Six</h5>
-      <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_six" hx-trigger="click, click from:#get_all">
+      <button 
+        class="bg-blue-500 text-white px-4 py-2 rounded"
+        hx-get="/offers" 
+        hx-swap="innerHTML" 
+        hx-target="#lender_offers_six" 
+        hx-trigger="click, click from:#get_all">
         Get Offers Number 6
       </button>
       <div id="lender_offers_six"></div>

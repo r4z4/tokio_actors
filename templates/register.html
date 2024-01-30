@@ -51,41 +51,43 @@
   {% if let Some(message) = message %}
   <span><strong>{{ message }}</strong></span>
   {% endif %}
+    <h1 class="main_header">Login</h1>
+    <form class="auth" method="post">
+      <fieldset>
+        <legend>Register</legend>
+        <p>
+          <label for="email">Email</label>
+          <input type="email" name="email" id="email" />
+        </p>
+        <p>
+          <label for="username">Username</label>
+          <input name="username" id="username" />
+        </p>
+        <p>
+          <label for="password">Password</label>
+          <input
+            name="password"
+            id="password"
+            type="password"
+          />
+        </p>
+        <p>
+          <label for="confirm_password">Confirm Password</label>
+          <input
+            name="confirm_password"
+            id="confirm_password"
+            type="password"
+          />
+        </p>
+      </fieldset>
 
-  <h1 class="main_header">Login</h1>
+      <div class="auth_submit">
+        <input type="submit" value="Register" />
+      </div>
 
-  <form method="post">
-    <fieldset>
-      <legend>Register</legend>
-      <p>
-        <label for="email">Email</label>
-        <input type="email" name="email" id="email" />
-      </p>
-      <p>
-        <label for="username">Username</label>
-        <input name="username" id="username" />
-      </p>
-      <p>
-        <label for="password">Password</label>
-        <input
-          name="password"
-          id="password"
-          type="password"
-        />
-      </p>
-      <p>
-        <label for="confirm_password">Confirm Password</label>
-        <input
-          name="confirm_password"
-          id="confirm_password"
-          type="password"
-        />
-      </p>
-    </fieldset>
-
-    <input type="submit" value="login" />
-
-  </form>
-  <div><p>Already have an account? <a href="/login">Log in here.</a></p></div>
+    </form>
+    <div class="auth_footer">
+      <p>Already have an account? <a href="/login">Log in here.</a></p>
+    </div>
   {% call super() %}
 {% endblock %}

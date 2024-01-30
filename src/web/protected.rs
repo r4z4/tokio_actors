@@ -24,7 +24,7 @@ struct ProtectedTemplate<'a> {
 pub fn router() -> Router<Arc<Mutex<SharedState>>> {
     Router::new()
         .route("/", get(self::get::protected))
-        .route("/sse", get(self::get::event_handler))
+        .route("/sse", get(self::get::sse_handler))
         .route("/trigger", get(self::get::trigger_call))
 }
 
@@ -72,12 +72,13 @@ mod get {
         // You can also create streams from tokio channels using the wrappers in
         // https://docs.rs/tokio-stream
         let stream = tokio_stream::StreamExt::map(stream::repeat_with(|| Event::default().data(rand::thread_rng().sample_iter(&Alphanumeric).take(5).map(char::from).collect::<String>())), Ok)
-            .throttle(std::time::Duration::from_secs(1));
+            .throttle(std::time::Duration::from_secs(5));
     
         // Sse::new(stream).keep_alive(KeepAlive::default())
         Sse::new(stream).keep_alive(
             axum::response::sse::KeepAlive::new()
-                .interval(std::time::Duration::from_secs(1))
+                // Don't believe these have any effect since setting above
+                .interval(std::time::Duration::from_secs(5))
                 .text(rand::thread_rng().sample_iter(&Alphanumeric).take(5).map(char::from).collect::<String>()),
         )
     }

@@ -251,6 +251,60 @@ CREATE TABLE IF NOT EXISTS offers (
 	            REFERENCES servicers(servicer_id)
     );
 
+CREATE TABLE IF NOT EXISTS loans (
+        loan_id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        application_id INTEGER NOT NULL,
+        servicer_id INTEGER NOT NULL,
+        emp_title TEXT NOT NULL,
+        emp_length INTEGER NOT NULL DEFAULT 0,
+        #[validate(custom = "validate_amount")]
+        state INTEGER NOT NULL DEFAULT 0,
+        homeownership INTEGER NOT NULL DEFAULT 0,
+        annual_income REAL NOT NULL DEFAULT 0.0,
+        verified_income REAL NOT NULL DEFAULT 0.0,
+        debt_to_income: REAL NOT NULL DEFAULT 0.0,
+        annual_income_joint INTEGER NOT NULL DEFAULT 0,
+        verification_income_joint INTEGER NOT NULL DEFAULT 0,
+        debt_to_income_joint INTEGER NOT NULL DEFAULT 0,
+        total_credit_lines INTEGER NOT NULL DEFAULT 0,
+        open_credit_lines INTEGER NOT NULL DEFAULT 0,
+        total_credit_limit INTEGER NOT NULL DEFAULT 0,
+        total_credit_utilized INTEGER NOT NULL DEFAULT 0,
+        num_collections_last_12m REAL NOT NULL DEFAULT 0.0,
+        num_historical_failed_to_pay REAL NOT NULL DEFAULT 0.0,
+        num_total_cc_accounts INTEGER NOT NULL DEFAULT 0,
+        num_open_cc_accounts INTEGER NOT NULL DEFAULT 0,
+        tax_liens INTEGER NOT NULL DEFAULT 0,
+        public_record_bankrupt INTEGER NOT NULL DEFAULT 0,
+        loan_purpose: LoanPurpose,
+        application_type: ApplicationType,
+        loan_amount INTEGER NOT NULL DEFAULT 0,
+        term INTEGER NOT NULL DEFAULT 0,
+        interest_rate REAL NOT NULL DEFAULT 0.0,
+        installment REAL NOT NULL DEFAULT 0.0,
+        grade INTEGER NOT NULL DEFAULT 0,
+        sub_grade INTEGER NOT NULL DEFAULT 0,
+        issue_month REAL NOT NULL DEFAULT 0.0,
+        loan_status: LoanStatus,
+        initial_listing_status: InitialListingStatus,
+        disbursement_method: DisbursementMethod,
+        balance REAL NOT NULL DEFAULT 0.0,
+        paid_total REAL NOT NULL DEFAULT 0.0,
+        paid_principal REAL NOT NULL DEFAULT 0.0,
+        paid_interest REAL NOT NULL DEFAULT 0.0,
+        paid_late_fees REAL NOT NULL DEFAULT 0.0,
+        CONSTRAINT fk_application
+            FOREIGN KEY(application_id) 
+	            REFERENCES applications(application_id),
+        CONSTRAINT fk_user
+            FOREIGN KEY(user_id) 
+	            REFERENCES users(user_id),
+        CONSTRAINT fk_services
+            FOREIGN KEY(servicer_id) 
+	            REFERENCES servicers(servicer_id)
+    );
+
 CREATE TABLE IF NOT EXISTS messages (
         message_id SERIAL PRIMARY KEY,
         content TEXT NOT NULL,
