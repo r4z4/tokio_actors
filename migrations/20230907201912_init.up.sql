@@ -251,37 +251,58 @@ CREATE TABLE IF NOT EXISTS offers (
 	            REFERENCES servicers(servicer_id)
     );
 
-CREATE TABLE IF NOT EXISTS loans (
-        loan_id SERIAL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS credit_file (
         user_id INTEGER NOT NULL,
-        application_id INTEGER NOT NULL,
-        servicer_id INTEGER NOT NULL,
         emp_title TEXT NOT NULL,
         emp_length INTEGER NOT NULL DEFAULT 0,
         state CHAR(2) NOT NULL,
-
         homeownership INTEGER NOT NULL DEFAULT 0,
-
         annual_income INTEGER NOT NULL DEFAULT 0.0,
         verified_income INTEGER NOT NULL DEFAULT 1,
         debt_to_income REAL NOT NULL DEFAULT 0.0,
         annual_income_joint INTEGER NULL,
         verification_income_joint INTEGER NULL,
         debt_to_income_joint REAL NULL,
+        delinq_2y INTEGER NOT NULL DEFAULT 0,
+        months_since_last_delinq INTEGER NULL,
+        earliest_credit_line INTEGER NOT NULL,
+        inquiries_last_12m INTEGER NOT NULL DEFAULT 0,
         total_credit_lines INTEGER NOT NULL DEFAULT 0,
         open_credit_lines INTEGER NOT NULL DEFAULT 0,
         total_credit_limit INTEGER NOT NULL DEFAULT 0,
         total_credit_utilized INTEGER NOT NULL DEFAULT 0,
         num_collections_last_12m REAL NOT NULL DEFAULT 0.0,
         num_historical_failed_to_pay REAL NOT NULL DEFAULT 0.0,
+        months_since_90d_late INTEGER NULL,
+        current_accounts_delinq INTEGER NOT NULL DEFAULT 0,		
+        total_collection_amount_ever INTEGER NOT NULL DEFAULT 0,		
+        current_installment_accounts INTEGER NOT NULL DEFAULT 0,		
+        accounts_opened_24m INTEGER NOT NULL DEFAULT 0,	
+        months_since_last_credit_inquiry INTEGER NULL,	
+        num_satisfactory_accounts INTEGER NOT NULL DEFAULT 0,	
+        num_accounts_120d_past_due INTEGER NOT NULL DEFAULT 0,	
+        num_accounts_30d_past_due INTEGER NOT NULL DEFAULT 0,	
+        num_active_debit_accounts INTEGER NOT NULL DEFAULT 0,	
+        total_debit_limit INTEGER NOT NULL DEFAULT 0,	
         num_total_cc_accounts INTEGER NOT NULL DEFAULT 0,
         num_open_cc_accounts INTEGER NOT NULL DEFAULT 0,
+        num_cc_carrying_balance INTEGER NOT NULL DEFAULT 0,	
+        num_mort_accounts INTEGER NOT NULL DEFAULT 0,	
+        account_never_delinq_percent REAL NOT NULL DEFAULT 100.0,
         tax_liens INTEGER NOT NULL DEFAULT 0,
         public_record_bankrupt INTEGER NOT NULL DEFAULT 0,
+        CONSTRAINT fk_user
+            FOREIGN KEY(user_id) 
+                REFERENCES users(user_id)
+    );
 
+CREATE TABLE IF NOT EXISTS loans (
+        loan_id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        application_id INTEGER NOT NULL,
+        servicer_id INTEGER NOT NULL,
         loan_purpose INTEGER NOT NULL DEFAULT 0,
         application_type INTEGER NOT NULL DEFAULT 0,
-
         loan_amount INTEGER NOT NULL DEFAULT 0,
         term INTEGER NOT NULL DEFAULT 0,
         interest_rate REAL NOT NULL DEFAULT 0.0,
@@ -289,11 +310,9 @@ CREATE TABLE IF NOT EXISTS loans (
         grade CHAR(1) NOT NULL,
         sub_grade CHAR(2) NOT NULL,
         issue_month CHAR(8) NOT NULL,
-
         loan_status INTEGER NOT NULL DEFAULT 0,
         initial_listing_status INTEGER NOT NULL DEFAULT 0,
         disbursement_method INTEGER NOT NULL DEFAULT 0,
-
         balance REAL NOT NULL DEFAULT 0.0,
         paid_total REAL NOT NULL DEFAULT 0.0,
         paid_principal REAL NOT NULL DEFAULT 0.0,
@@ -305,7 +324,7 @@ CREATE TABLE IF NOT EXISTS loans (
         CONSTRAINT fk_user
             FOREIGN KEY(user_id) 
 	            REFERENCES users(user_id),
-        CONSTRAINT fk_services
+        CONSTRAINT fk_servicer
             FOREIGN KEY(servicer_id) 
 	            REFERENCES servicers(servicer_id)
     );
@@ -540,12 +559,20 @@ VALUES
 (1, 1, 15000, 5000, 36, 12.99, 3.2, DATE(NOW() + INTERVAL '4 week')),
 (2, 2, 15000, 5000, 36, 15.99, 2.2, DATE(NOW() + INTERVAL '2 week'));
 
-INSERT INTO loans (user_id,application_id,servicer_id,emp_title, emp_length,state,homeownership,annual_income,verified_income,debt_to_income,annual_income_joint,verification_income_joint,debt_to_income_joint,total_credit_lines,
-        open_credit_lines,total_credit_limit,total_credit_utilized,num_collections_last_12m,num_historical_failed_to_pay,num_total_cc_accounts,num_open_cc_accounts,tax_liens,public_record_bankrupt,loan_purpose,application_type,
-        loan_amount,term,interest_rate,installment,grade,sub_grade,issue_month,loan_status,initial_listing_status,disbursement_method,balance,paid_total,paid_principal,paid_interest,paid_late_fees)
+INSERT INTO credit_file (user_id, emp_title, emp_length, state, homeownership, annual_income, verified_income,debt_to_income,annual_income_joint, verification_income_joint, debt_to_income_joint,
+        delinq_2y, months_since_last_delinq, earliest_credit_line, inquiries_last_12m, total_credit_lines, open_credit_lines, total_credit_limit, total_credit_utilized, 
+        num_collections_last_12m, num_historical_failed_to_pay, months_since_90d_late, current_accounts_delinq, total_collection_amount_ever, current_installment_accounts, 
+        accounts_opened_24m, months_since_last_credit_inquiry, num_satisfactory_accounts, num_accounts_120d_past_due, num_accounts_30d_past_due, num_active_debit_accounts, 
+        total_debit_limit, num_total_cc_accounts, num_open_cc_accounts, num_cc_carrying_balance, num_mort_accounts, account_never_delinq_percent, tax_liens, public_record_bankrupt)
 VALUES 
-(1, 1, 1, 'president',              3, 'NE', 1, 90000, 1, 18.01, NULL, NULL, NULL, 28, 10, 70795, 38767, 0, 0, 14, 8, 0, 0, 2, 1, 28000, 60, 14.07, 652.53, 'C', 'C3', 'Mar-2018', 1, 2, 1, 27015.86, 1999.33, 984.14, 1015.19, 0),
-(2, 2, 1, 'sales representative',   7, 'MN', 2, 45000, 1, 18.01, NULL, NULL, NULL, 28, 10, 40795, 22767, 0, 0, 14, 8, 0, 0, 2, 1, 18000, 60, 14.07, 452.53, 'A', 'A2', 'Jun-2018', 1, 2, 1, 21335.86, 1299.33, 984.14, 1015.19, 0);
+(1, 'president',              3, 'NE', 1, 90000, 1, 18.01, NULL, NULL, NULL, 0, NULL, 2001, 6, 28, 10, 70795, 38767, 0, 0, NULL, 0, 0, 2, 5, NULL, 0, 0, 0, 2, 11100, 14, 8, 6, 1, 92.9, 0, 0),
+(2, 'sales representative',   7, 'MN', 2, 45000, 1, 18.01, NULL, NULL, NULL, 0, NULL, 2001, 6, 28, 10, 40795, 22767, 0, 0, NULL, 0, 0, 2, 5, NULL, 0, 0, 0, 2, 11100, 14, 8, 6, 1, 92.9, 0, 0);
+
+INSERT INTO loans (user_id, application_id, servicer_id, loan_purpose, application_type, loan_amount, term, interest_rate, installment, grade, sub_grade,
+                    issue_month, loan_status, initial_listing_status, disbursement_method, balance, paid_total, paid_principal, paid_interest, paid_late_fees)
+VALUES 
+(1, 1, 1, 2, 1, 28000, 60, 14.07, 652.53, 'C', 'C3', 'Mar-2018', 1, 2, 1, 27015.86, 1999.33, 984.14, 1015.19, 0),
+(2, 2, 1, 2, 1, 18000, 60, 14.07, 452.53, 'A', 'A2', 'Jun-2018', 1, 2, 1, 21335.86, 1299.33, 984.14, 1015.19, 0);
 
 
 
