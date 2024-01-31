@@ -258,15 +258,16 @@ CREATE TABLE IF NOT EXISTS loans (
         servicer_id INTEGER NOT NULL,
         emp_title TEXT NOT NULL,
         emp_length INTEGER NOT NULL DEFAULT 0,
-        #[validate(custom = "validate_amount")]
-        state INTEGER NOT NULL DEFAULT 0,
+        state CHAR(2) NOT NULL,
+
         homeownership INTEGER NOT NULL DEFAULT 0,
-        annual_income REAL NOT NULL DEFAULT 0.0,
-        verified_income REAL NOT NULL DEFAULT 0.0,
-        debt_to_income: REAL NOT NULL DEFAULT 0.0,
-        annual_income_joint INTEGER NOT NULL DEFAULT 0,
-        verification_income_joint INTEGER NOT NULL DEFAULT 0,
-        debt_to_income_joint INTEGER NOT NULL DEFAULT 0,
+
+        annual_income INTEGER NOT NULL DEFAULT 0.0,
+        verified_income INTEGER NOT NULL DEFAULT 1,
+        debt_to_income REAL NOT NULL DEFAULT 0.0,
+        annual_income_joint INTEGER NULL,
+        verification_income_joint INTEGER NULL,
+        debt_to_income_joint REAL NULL,
         total_credit_lines INTEGER NOT NULL DEFAULT 0,
         open_credit_lines INTEGER NOT NULL DEFAULT 0,
         total_credit_limit INTEGER NOT NULL DEFAULT 0,
@@ -277,18 +278,22 @@ CREATE TABLE IF NOT EXISTS loans (
         num_open_cc_accounts INTEGER NOT NULL DEFAULT 0,
         tax_liens INTEGER NOT NULL DEFAULT 0,
         public_record_bankrupt INTEGER NOT NULL DEFAULT 0,
-        loan_purpose: LoanPurpose,
-        application_type: ApplicationType,
+
+        loan_purpose INTEGER NOT NULL DEFAULT 0,
+        application_type INTEGER NOT NULL DEFAULT 0,
+
         loan_amount INTEGER NOT NULL DEFAULT 0,
         term INTEGER NOT NULL DEFAULT 0,
         interest_rate REAL NOT NULL DEFAULT 0.0,
         installment REAL NOT NULL DEFAULT 0.0,
-        grade INTEGER NOT NULL DEFAULT 0,
-        sub_grade INTEGER NOT NULL DEFAULT 0,
-        issue_month REAL NOT NULL DEFAULT 0.0,
-        loan_status: LoanStatus,
-        initial_listing_status: InitialListingStatus,
-        disbursement_method: DisbursementMethod,
+        grade CHAR(1) NOT NULL,
+        sub_grade CHAR(2) NOT NULL,
+        issue_month CHAR(8) NOT NULL,
+
+        loan_status INTEGER NOT NULL DEFAULT 0,
+        initial_listing_status INTEGER NOT NULL DEFAULT 0,
+        disbursement_method INTEGER NOT NULL DEFAULT 0,
+
         balance REAL NOT NULL DEFAULT 0.0,
         paid_total REAL NOT NULL DEFAULT 0.0,
         paid_principal REAL NOT NULL DEFAULT 0.0,
@@ -534,6 +539,14 @@ INSERT INTO offers (servicer_id, application_id, max_amount, min_amount, terms, 
 VALUES 
 (1, 1, 15000, 5000, 36, 12.99, 3.2, DATE(NOW() + INTERVAL '4 week')),
 (2, 2, 15000, 5000, 36, 15.99, 2.2, DATE(NOW() + INTERVAL '2 week'));
+
+INSERT INTO loans (user_id,application_id,servicer_id,emp_title, emp_length,state,homeownership,annual_income,verified_income,debt_to_income,annual_income_joint,verification_income_joint,debt_to_income_joint,total_credit_lines,
+        open_credit_lines,total_credit_limit,total_credit_utilized,num_collections_last_12m,num_historical_failed_to_pay,num_total_cc_accounts,num_open_cc_accounts,tax_liens,public_record_bankrupt,loan_purpose,application_type,
+        loan_amount,term,interest_rate,installment,grade,sub_grade,issue_month,loan_status,initial_listing_status,disbursement_method,balance,paid_total,paid_principal,paid_interest,paid_late_fees)
+VALUES 
+(1, 1, 1, 'president',              3, 'NE', 1, 90000, 1, 18.01, NULL, NULL, NULL, 28, 10, 70795, 38767, 0, 0, 14, 8, 0, 0, 2, 1, 28000, 60, 14.07, 652.53, 'C', 'C3', 'Mar-2018', 1, 2, 1, 27015.86, 1999.33, 984.14, 1015.19, 0),
+(2, 2, 1, 'sales representative',   7, 'MN', 2, 45000, 1, 18.01, NULL, NULL, NULL, 28, 10, 40795, 22767, 0, 0, 14, 8, 0, 0, 2, 1, 18000, 60, 14.07, 452.53, 'A', 'A2', 'Jun-2018', 1, 2, 1, 21335.86, 1299.33, 984.14, 1015.19, 0);
+
 
 
 -- Triggers

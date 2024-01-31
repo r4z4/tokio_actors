@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS reset_password_requests;
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS attachments;
 DROP TABLE IF EXISTS offers;
+DROP TABLE IF EXISTS loans;
 DROP TABLE IF EXISTS servicers;
 DROP TABLE IF EXISTS applications CASCADE;
 
