@@ -47,13 +47,14 @@ pub async fn get_offers(
                 ActorMessage::GetOffers { respond_to, offers } => {
                     let lc_offers: Option<Vec<Offer>> = offers.clone().unwrap().get(&1).cloned();
                     let file_name = "assets/data/____credit_file_test_2.csv";
-                    let file_contents = fs::read_to_string(file_name).expect("Cannot read file");
-                    let mut rdr = Reader::from_reader(file_contents.as_bytes());
-                    // if result.is_err() {
-                    //     println!("Error w/ CSV");
-                    //     std::process::exit(9);
-                    // }
-                    // let mut rdr = result.unwrap();
+                    // let file_contents = fs::read_to_string(file_name).expect("Cannot read file");
+                    // let mut rdr = Reader::from_reader(file_contents.as_bytes());
+                    let result = Reader::from_path(file_name);
+                    if result.is_err() {
+                        println!("Error w/ CSV");
+                        std::process::exit(9);
+                    }
+                    let mut rdr = result.unwrap();
                     // let mut rows = rdr.deserialize().map(|r| r.unwrap()).collect::<Vec<Review>>();
                     // for record in rdr.records() {
                     //     println!("First field is {}", record.unwrap().get(0).unwrap())
