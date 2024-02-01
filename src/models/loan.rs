@@ -52,6 +52,8 @@ pub struct Loan {
     pub num_historical_failed_to_pay: f32,
     pub num_total_cc_accounts: i32,
     pub num_open_cc_accounts: i32,
+    // Tell Serde CSV col name if we want a diff name in struct
+    // #[serde(rename = "num_historical_failed_to_pay")]
     pub tax_liens: i32,
     pub public_record_bankrupt: i32,
     pub loan_purpose: LoanPurpose,
