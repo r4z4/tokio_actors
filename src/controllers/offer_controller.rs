@@ -4,6 +4,7 @@ use std::ops::Deref;
 use askama::Template;
 use askama_axum::IntoResponse;
 use axum::{Extension, Json, response::Response, debug_handler};
+use csv::Reader;
 use hyper::StatusCode;
 use serde_json::{Value, json};
 use sqlx::PgPool;
@@ -43,6 +44,16 @@ pub async fn get_offers(
                 // FIXME: Handle None in OffersTemplate
                 ActorMessage::GetOffers { respond_to, offers } => {
                     let lc_offers: Option<Vec<Offer>> = offers.clone().unwrap().get(&1).cloned();
+                    let file_name = "assets/data/____credit_file_test.csv";
+                    let result = Reader::from_path(file_name);
+                    if result.is_err() {
+                        println!("Error w/ CSV");
+                        std::process::exit(9);
+                    }
+                    let mut rdr = result.unwrap();
+                    for record in rdr.records() {
+                        println!("First field is {}", record.unwrap().get(0).unwrap())
+                    }
                     OffersTemplate {offers: &offers.unwrap(), lc_offers: lc_offers, message: None}.into_response()
                 },
                 _ => (StatusCode::CREATED, AppError::GenericError("Actor Message Type in Incorrect".to_owned())).into_response()
