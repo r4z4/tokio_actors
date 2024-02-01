@@ -51,6 +51,7 @@ pub async fn get_offers(
                         std::process::exit(9);
                     }
                     let mut rdr = result.unwrap();
+                    // let mut rows = rdr.deserialize().map(|r| r.unwrap()).collect::<Vec<Review>>();
                     for record in rdr.records() {
                         println!("First field is {}", record.unwrap().get(0).unwrap())
                     }

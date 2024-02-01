@@ -64,17 +64,17 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    const IMAGE_LINKS_EX: &str = "['Hello','World']";
+    const IMAGE_LINKS_EX: &str = "['NonUrlString','SecondRegularString']";
 
     #[test]
     fn test_unbox_image_links() {
-        assert_eq!(IMAGE_LINKS_EX.unbox_image_links(), "'Hello','World'");
+        assert_eq!(IMAGE_LINKS_EX.unbox_image_links(), "'NonUrlString','SecondRegularString'");
     }
 
     #[test]
     fn test_split_image_links() {
-        const IMAGE_LINKS_STR: &str = "'Hello','World'";
-        assert_eq!(IMAGE_LINKS_STR.split_image_links(), vec!["'Hello'","'World'"]);
+        const IMAGE_LINKS_STR: &str = "'NonUrlString','SecondRegularString'";
+        assert_eq!(IMAGE_LINKS_STR.split_image_links(), vec!["'NonUrlString'","'SecondRegularString'"]);
     }
     
     #[test]
