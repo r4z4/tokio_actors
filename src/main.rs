@@ -9,6 +9,7 @@ mod users;
 // Import modules
 mod actors;
 mod controllers;
+mod libs;
 mod error;
 mod models;
 mod config;
