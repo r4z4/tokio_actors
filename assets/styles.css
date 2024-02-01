@@ -119,6 +119,26 @@ li.dropdown {
   display: block;
 }
 
+.icon {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+}
+.icon-large {
+  width: 50px;
+  height: 50px;
+}
+.icon-small {
+  width: 20px;
+  height: 20px;
+}
+.icon-light-background {
+  fill: black;
+}
+.icon-dark-background {
+  fill: white;
+}
+
 /* Offer */
 .grid_wrap {
   display: grid;

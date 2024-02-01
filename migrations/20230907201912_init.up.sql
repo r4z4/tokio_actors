@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS accounts (
         account_name TEXT NOT NULL UNIQUE,
         account_secret TEXT DEFAULT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
+        updated_at TIMESTAMPTZ DEFAULT NULL
     );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS users (
 
         avatar_path TEXT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NULL,
         CONSTRAINT fk_account_id
             FOREIGN KEY(account_id) 
 	            REFERENCES accounts(account_id)
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS user_details (
         mobile_phone TEXT NULL,
         secondary_phone TEXT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NULL,
         CONSTRAINT fk_user_id
             FOREIGN KEY(user_id) 
 	            REFERENCES users(user_id)
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
         list_view TEXT NOT NULL DEFAULT 'consult',
         notifications BOOLEAN NOT NULL DEFAULT FALSE,
         newsletter BOOLEAN NOT NULL DEFAULT FALSE,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NULL,
         CONSTRAINT fk_user_id
             FOREIGN KEY(user_id) 
 	            REFERENCES users(user_id)
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS contacts (
     contact_primary_phone TEXT NULL,
     contact_secondary_phone TEXT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NULL
 );
 
 -- FIXME: Add PostGIS and lat/long
@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS locations (
         location_contact_id INTEGER NOT NULL DEFAULT 1,
         territory_id INTEGER NOT NULL DEFAULT 1,
         created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NULL,
         CONSTRAINT fk_contact
             FOREIGN KEY(location_contact_id) 
 	            REFERENCES contacts(contact_id),
@@ -251,8 +251,23 @@ CREATE TABLE IF NOT EXISTS offers (
 	            REFERENCES servicers(servicer_id)
     );
 
+CREATE TABLE IF NOT EXISTS borrowers (
+        borrower_id SERIAL PRIMARY KEY,
+        borrower_slug TEXT NOT NULL DEFAULT (uuid_generate_v4()),
+        location_id INTEGER NOT NULL DEFAULT 3,
+        f_name  TEXT NOT NULL,
+        l_name  TEXT NOT NULL,
+        dob DATE NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NULL,
+        CONSTRAINT fk_location_id
+            FOREIGN KEY(location_id) 
+	            REFERENCES locations(location_id)
+    );
+
 CREATE TABLE IF NOT EXISTS credit_file (
-        user_id INTEGER NOT NULL,
+        borrower_id INTEGER NOT NULL,
         emp_title TEXT NOT NULL,
         emp_length INTEGER NOT NULL DEFAULT 0,
         state CHAR(2) NOT NULL,
@@ -291,14 +306,14 @@ CREATE TABLE IF NOT EXISTS credit_file (
         account_never_delinq_percent REAL NOT NULL DEFAULT 100.0,
         tax_liens INTEGER NOT NULL DEFAULT 0,
         public_record_bankrupt INTEGER NOT NULL DEFAULT 0,
-        CONSTRAINT fk_user
-            FOREIGN KEY(user_id) 
-                REFERENCES users(user_id)
+        CONSTRAINT fk_borrower
+            FOREIGN KEY(borrower_id) 
+                REFERENCES borrowers(borrower_id)
     );
 
 CREATE TABLE IF NOT EXISTS loans (
         loan_id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL,
+        borrower_id INTEGER NOT NULL,
         application_id INTEGER NOT NULL,
         servicer_id INTEGER NOT NULL,
         loan_purpose INTEGER NOT NULL DEFAULT 0,
@@ -321,9 +336,9 @@ CREATE TABLE IF NOT EXISTS loans (
         CONSTRAINT fk_application
             FOREIGN KEY(application_id) 
 	            REFERENCES applications(application_id),
-        CONSTRAINT fk_user
-            FOREIGN KEY(user_id) 
-	            REFERENCES users(user_id),
+        CONSTRAINT fk_borrower
+            FOREIGN KEY(borrower_id) 
+	            REFERENCES borrowers(borrower_id),
         CONSTRAINT fk_servicer
             FOREIGN KEY(servicer_id) 
 	            REFERENCES servicers(servicer_id)
@@ -554,12 +569,24 @@ VALUES
 ('WonderCare', 'Greg Cote', NULL),
 ('National Loans', 'Jim Jones', '555-555-5555');
 
+INSERT INTO borrowers (location_id, f_name, l_name, dob, email) 
+VALUES 
+(1, 'Jen', 'Smith', '1987-04-01', 'b1@eg.com'),
+(1, 'Chris', 'Reynolds', '1980-08-11', 'b2@eg.com'),
+(1, 'Eric', 'Jackson', '1975-09-21', 'b3@eg.com'),
+(2, 'Rick', 'Garcia', '1956-03-30', 'b4@eg.com'),
+(2, 'Ellen', 'Lobos', '1965-12-19', 'b5@eg.com'),
+(2, 'Louise', 'Wilson', '1971-11-09', 'b6@eg.com'),
+(1, 'George', 'Ambers', '1988-09-03', 'b7@eg.com'),
+(2, 'Rob', 'Lucas', '1992-03-08', 'b8@eg.com'),
+(1, 'Jake', 'Kielen', '1973-05-28', 'b9@eg.com');
+
 INSERT INTO offers (servicer_id, application_id, max_amount, min_amount, terms, apr, percent_fee, expires) 
 VALUES 
 (1, 1, 15000, 5000, 36, 12.99, 3.2, DATE(NOW() + INTERVAL '4 week')),
 (2, 2, 15000, 5000, 36, 15.99, 2.2, DATE(NOW() + INTERVAL '2 week'));
 
-INSERT INTO credit_file (user_id, emp_title, emp_length, state, homeownership, annual_income, verified_income,debt_to_income,annual_income_joint, verification_income_joint, debt_to_income_joint,
+INSERT INTO credit_file (borrower_id, emp_title, emp_length, state, homeownership, annual_income, verified_income,debt_to_income,annual_income_joint, verification_income_joint, debt_to_income_joint,
         delinq_2y, months_since_last_delinq, earliest_credit_line, inquiries_last_12m, total_credit_lines, open_credit_lines, total_credit_limit, total_credit_utilized, 
         num_collections_last_12m, num_historical_failed_to_pay, months_since_90d_late, current_accounts_delinq, total_collection_amount_ever, current_installment_accounts, 
         accounts_opened_24m, months_since_last_credit_inquiry, num_satisfactory_accounts, num_accounts_120d_past_due, num_accounts_30d_past_due, num_active_debit_accounts, 
@@ -568,7 +595,7 @@ VALUES
 (1, 'president',              3, 'NE', 1, 90000, 1, 18.01, NULL, NULL, NULL, 0, NULL, 2001, 6, 28, 10, 70795, 38767, 0, 0, NULL, 0, 0, 2, 5, NULL, 0, 0, 0, 2, 11100, 14, 8, 6, 1, 92.9, 0, 0),
 (2, 'sales representative',   7, 'MN', 2, 45000, 1, 18.01, NULL, NULL, NULL, 0, NULL, 2001, 6, 28, 10, 40795, 22767, 0, 0, NULL, 0, 0, 2, 5, NULL, 0, 0, 0, 2, 11100, 14, 8, 6, 1, 92.9, 0, 0);
 
-INSERT INTO loans (user_id, application_id, servicer_id, loan_purpose, application_type, loan_amount, term, interest_rate, installment, grade, sub_grade,
+INSERT INTO loans (borrower_id, application_id, servicer_id, loan_purpose, application_type, loan_amount, term, interest_rate, installment, grade, sub_grade,
                     issue_month, loan_status, initial_listing_status, disbursement_method, balance, paid_total, paid_principal, paid_interest, paid_late_fees)
 VALUES 
 (1, 1, 1, 2, 1, 28000, 60, 14.07, 652.53, 'C', 'C3', 'Mar-2018', 1, 2, 1, 27015.86, 1999.33, 984.14, 1015.19, 0),
