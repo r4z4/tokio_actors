@@ -10,6 +10,10 @@ pub enum LoanStatus {
     Current = 1,
     FullyPaid = 2,
     InGracePeriod = 3,
+    Late1to15 = 4,
+    Late16to30 = 5,
+    Late31to120 = 6,
+    ChargedOff = 7,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -18,27 +22,35 @@ pub enum LoanPurpose {
     Moving = 1,
     Medical = 2,
     DebtConsolidation = 3,
+    CreditCard = 4,
+    HomeImprovement = 5,
+    Car = 6,
+    House = 7,
+    MajorPurchase = 8,
+    Vacation = 9,
+    SmallBusiness = 10,
+    Other = 11,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[repr(u32)]
 pub enum DisbursementMethod {
-    Cash,
-    DirectPay
+    Cash = 1,
+    DirectPay = 2,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[repr(u32)]
 pub enum ApplicationType {
-    Individual,
-    Joint
+    Individual = 1,
+    Joint = 2,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[repr(u32)]
 pub enum InitialListingStatus {
-    Whole,
-    Fractional
+    Whole = 1,
+    Fractional = 2,
 }
 
 #[derive(Debug, Validate, Serialize, Clone, FromRow, Deserialize)]

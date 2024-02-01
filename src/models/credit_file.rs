@@ -2,30 +2,37 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use validator::Validate;
 
+use crate::libs::credit_file_enums::{deserialize_homeownership, deserialize_income_verification, deserialize_na_col};
+
 #[derive(Debug, Validate, Serialize, Clone, FromRow, Deserialize)]
 pub struct CreditFile {
     pub borrower_id: i32,
-    pub emp_title: String,
-    pub emp_length: i32,
+    pub emp_title: Option<String>,
+    pub emp_length: Option<i32>,
     pub state: String,
+    #[serde(deserialize_with = "deserialize_homeownership")]
     pub homeownership: HomeOwnership,
     pub annual_income: f32,
+    #[serde(deserialize_with = "deserialize_income_verification")]
     pub verified_income: IncomeVerification,
     pub debt_to_income: f32,
     pub annual_income_joint: Option<i32>,
-    pub verification_income_joint: Option<IncomeVerification>,
+    #[serde(deserialize_with = "deserialize_income_verification")]
+    pub verification_income_joint: IncomeVerification,
     pub debt_to_income_joint: Option<f32>,
     pub delinq_2y: i32,
-    pub months_since_last_delinq: i32,
+    // Cols with "NA" or Integer need to handled
+    #[serde(deserialize_with = "deserialize_na_col")]
+    pub months_since_last_delinq: Option<i32>,
     pub earliest_credit_line: i32,
     pub inquiries_last_12m: i32,
-    pub total_credit_lines: i32,
+    pub total_credit_lines: Option<i32>,
     pub open_credit_lines: i32,
     pub total_credit_limit: i32,
     pub total_credit_utilized: i32,
     pub num_collections_last_12m: f32,
     pub num_historical_failed_to_pay: f32,
-    pub months_since_90d_late: i32,
+    pub months_since_90d_late: Option<i32>,
     pub current_accounts_delinq: i32,	
     pub total_collection_amount_ever: i32,	
     pub current_installment_accounts: i32,	
