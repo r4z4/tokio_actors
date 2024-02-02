@@ -37,7 +37,7 @@ mod get {
     use rand::{distributions::Alphanumeric, Rng};
     use tokio::{sync::{broadcast, mpsc}, time::sleep};
 
-    use crate::{actors::actor::{get_mock_offers, ActorHandle, ActorMessage}, models::offer::Offer};
+    use crate::{actors::actor::{get_mock_offers, ActorHandle, ActorMessage}, models::{credit_file::mock_credit_file, loan::mock_loan, offer::Offer}};
 
     use super::*;
 
@@ -58,6 +58,10 @@ mod get {
     }
 
     pub async fn trigger_call(State(state): State<Arc<Mutex<SharedState>>>) -> () {
+        let mock_credit_file = mock_credit_file();
+        dbg!(mock_credit_file);
+        let mock_loan = mock_loan();
+        dbg!(mock_loan);
         state.lock().unwrap().event_tx.send(rand::thread_rng().sample_iter(&Alphanumeric).take(5).map(char::from).collect::<String>());
     }
 
