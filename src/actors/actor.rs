@@ -3,7 +3,7 @@ use std::{fs::File, io::Write};
 use chrono::{Utc, NaiveDate, Datelike};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{oneshot, mpsc};
+use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio::time::{sleep, Duration};
 
 use crate::models::offer::Offer;
@@ -35,6 +35,11 @@ pub enum ActorMessage {
     GetOffersMpsc {
         respond_to: Option<mpsc::Sender<ActorMessage>>,
         offers: Option<HashMap<i32, Vec<Offer>>>,
+    },
+    GetOffersLoop {
+        respond_to: Option<broadcast::Sender<String>>,
+        offers: Option<HashMap<i32, Vec<Offer>>>,
+        self_pid: ActorHandle,
     },
     RegularMessage {
         text: String,
@@ -142,6 +147,13 @@ impl Actor {
                 if let Some(sender) = respond_to {
                     let _ = sender.send(actor_message);
                 }
+            },
+            ActorMessage::GetOffersLoop { respond_to, offers, self_pid } => {
+                println!("GetOffersLoop received");
+                // let offers = aggregate_offers(3);
+                sleep(Duration::from_millis(2000)).await;
+                let loop_message = ActorMessage::GetOffersLoop { respond_to: respond_to, offers: None, self_pid: self_pid.clone()};
+                self_pid.sender.send(loop_message).await;
             },
             ActorMessage::RegularMessage { text } => {
                 println!("Regular Message has been received: {}", text);
