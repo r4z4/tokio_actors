@@ -21,7 +21,7 @@ use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::{broadcast, mpsc, oneshot}, io::{AsyncRead, AsyncWrite}};
-use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, store::new_db_pool, payment::CreditCardApiResp, auth::{CurrentUser, CurrentUserOpt}}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}};
+use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use sqlx::FromRow;
 use sqlx::types::time::Date;
@@ -46,8 +46,8 @@ pub struct AppState {
 
 #[derive(Debug)]
 pub struct SharedState {
-    pub event_tx: broadcast::Sender<String>,
-    pub event_rx: broadcast::Receiver<String>,
+    pub offer_tx: Option<broadcast::Sender<Offer>>,
+    pub offer_rx: Option<broadcast::Receiver<Offer>>,
     pub name: Option<String>,
     pub actor_handle: ActorHandle,
 }
@@ -125,7 +125,7 @@ impl App {
 
         dbg!(resp);
 
-        let (event_tx, mut event_rx) = broadcast::channel(5000);
+        // let (offer_tx, mut offer_rx) = broadcast::channel(5000);
 
         // let client = redis_client().unwrap();
         // let mut con = client.get_connection()?;
@@ -177,7 +177,7 @@ impl App {
 
         // let state = AppState { name: None, actor_handle: actor_handle.clone() };
 
-        let state = Arc::new(Mutex::new(SharedState { name: None, actor_handle: actor_handle.clone(), event_tx: event_tx, event_rx: event_rx }));
+        let state = Arc::new(Mutex::new(SharedState { name: None, actor_handle: actor_handle.clone(), offer_tx: None, offer_rx: None }));
 
         let offer_handle = ActorHandle::new();
         let (send, recv) = oneshot::channel();

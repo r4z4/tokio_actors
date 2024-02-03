@@ -79,7 +79,7 @@ pub fn get_mock_offers(num_offers: i32) -> Vec<Offer> {
     offers
 }
 
-fn mock_offer(servicer_id: i32) -> Offer {
+pub fn mock_offer(servicer_id: i32) -> Offer {
     let mut rng = rand::thread_rng();
     let exp_dt = Utc::now() + chrono::Duration::days(21);
     let terms = [12,24,36,48,64,78,96,128];
@@ -164,11 +164,11 @@ impl Actor {
                 let tx = respond_to.clone().unwrap();
                 let _ = tx.send(str);
                 let new_instructions = LoopInstructions { iterations: count, listen_for: None };
-                // let offers = aggregate_offers(3);
+                let offers = aggregate_offers(3);
                 sleep(Duration::from_millis(2000)).await;
                 // If want to loop, create message & send
                 if count > 0 {
-                    let loop_message = ActorMessage::GetOffersLoop { respond_to: respond_to, offers: None, self_pid: self_pid.clone(), instructions: new_instructions};
+                    let loop_message = ActorMessage::GetOffersLoop { respond_to: respond_to, offers: Some(offers), self_pid: self_pid.clone(), instructions: new_instructions};
                     self_pid.sender.send(loop_message).await;
                 }
             },
