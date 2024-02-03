@@ -3,14 +3,16 @@
   <span><strong>{{ message }}</strong></span>
   {% endif %}
   <h1 class="main_header">Offers</h1>
-    <div>{{ offers|json }}</div>
+    <!--<div>{{ offers|json }}</div>-->
     <div>
         {% if let Some(lc_offers) = lc_offers %}
-        <ul>
             {% for offer in lc_offers %}
-                <li>{{ offer.max_amount }}</li>
+            <ul class="offer_list">
+                <li>Servicer: {{ offer.servicer_id }}</li>
+                <li>Terms: {{ offer.terms }}</li>
+                <li>Maximum Amount: {{ offer.max_amount }}</li>
+            </ul>
             {% endfor %}
-        </ul>
         {% endif %}
     </div>
 {% endblock %}

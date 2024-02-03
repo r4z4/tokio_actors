@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 use std::{fs::File, io::Write};
 use chrono::{Utc, NaiveDate, Datelike};
 use rand::Rng;
@@ -23,6 +24,13 @@ pub struct CreateActor {
     pub name: String
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LoopInstructions {
+    pub iterations: i32,
+    // FIXME: Not string
+    pub listen_for: Option<String>,
+}
+
 #[derive(Debug)]
 pub enum ActorMessage {
     GetUniqueId {
@@ -40,6 +48,7 @@ pub enum ActorMessage {
         respond_to: Option<broadcast::Sender<String>>,
         offers: Option<HashMap<i32, Vec<Offer>>>,
         self_pid: ActorHandle,
+        instructions: LoopInstructions,
     },
     RegularMessage {
         text: String,
@@ -148,12 +157,20 @@ impl Actor {
                     let _ = sender.send(actor_message);
                 }
             },
-            ActorMessage::GetOffersLoop { respond_to, offers, self_pid } => {
-                println!("GetOffersLoop received");
+            ActorMessage::GetOffersLoop { respond_to, offers, self_pid, instructions } => {
+                println!("GetOffersLoop received. Iterations Left: {}", instructions.iterations);
+                let count = instructions.iterations - 1;
+                let str = format!("From Loop: {}", count);
+                let tx = respond_to.clone().unwrap();
+                let _ = tx.send(str);
+                let new_instructions = LoopInstructions { iterations: count, listen_for: None };
                 // let offers = aggregate_offers(3);
                 sleep(Duration::from_millis(2000)).await;
-                let loop_message = ActorMessage::GetOffersLoop { respond_to: respond_to, offers: None, self_pid: self_pid.clone()};
-                self_pid.sender.send(loop_message).await;
+                // If want to loop, create message & send
+                if count > 0 {
+                    let loop_message = ActorMessage::GetOffersLoop { respond_to: respond_to, offers: None, self_pid: self_pid.clone(), instructions: new_instructions};
+                    self_pid.sender.send(loop_message).await;
+                }
             },
             ActorMessage::RegularMessage { text } => {
                 println!("Regular Message has been received: {}", text);

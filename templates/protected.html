@@ -75,15 +75,18 @@
         hx-trigger="click, click from:#get_all"
       >Get Offers Number 1
       </button>
-      <div id="lender_offers_one"></div>
     </div>
     
     <div class="card">
       <h5>Number Two</h5>
-      <button hx-get="/offers" hx-swap="innerHTML" hx-target="#lender_offers_two" hx-trigger="click, click from:#get_all">
-        Get Offers Number 2
+      <button 
+        class="main_btn"
+        hx-get="/offers" 
+        hx-swap="innerHTML" 
+        hx-target="#lender_offers_two" 
+        hx-trigger="click, click from:#get_all"
+      >Get Offers Number 2
       </button>
-      <div id="lender_offers_two"></div>
     </div>
 
     <div class="card">
@@ -96,7 +99,6 @@
         hx-trigger="click, click from:#get_all"
       >Get Offers Number 3
       </button>
-      <div id="lender_offers_three"></div>
     </div>
 
     <div class="card">
@@ -109,7 +111,6 @@
         hx-trigger="click, click from:#get_all"
       >Get Offers Number 4
       </button>
-      <div id="lender_offers_four"></div>
     </div>
     
     <div class="card">
@@ -122,7 +123,6 @@
         hx-trigger="click, click from:#get_all"
       >Get Offers Number 5
       </button>
-      <div id="lender_offers_five"></div>
     </div>
 
     <div class="card">
@@ -135,9 +135,16 @@
         hx-trigger="click, click from:#get_all">
         Get Offers Number 6
       </button>
-      <div id="lender_offers_six"></div>
     </div>
+  </div>
 
+  <div class="cards">
+    <div id="lender_offers_one"></div>
+    <div id="lender_offers_two"></div>
+    <div id="lender_offers_three"></div>
+    <div id="lender_offers_four"></div>
+    <div id="lender_offers_five"></div>
+    <div id="lender_offers_six"></div>
   </div>
 
   <div><a href="/logout">Logout</a></div>

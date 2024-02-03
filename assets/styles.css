@@ -97,11 +97,11 @@ nav {
   color:rgb(200, 211, 214);
 }
 
-li {
+.crumbs li {
   float: left;
 }
 
-li a, .dropbtn {
+.crumbs li a, .dropbtn {
   display: inline-block;
   color: white;
   text-align: center;
@@ -109,7 +109,7 @@ li a, .dropbtn {
   text-decoration: none;
 }
 
-li a:hover, .dropdown:hover .dropbtn {
+.crumbs li a:hover, .dropdown:hover .dropbtn {
   background-color: rgb(231, 187, 235);
 }
 
@@ -168,6 +168,14 @@ li.dropdown {
   justify-content: space-evenly;
   height: 400px;
   align-content: center;
+}
+
+.offer_list {
+  list-style-type: none;
+}
+
+.offer_list li {
+  display: block;
 }
 
 .card {

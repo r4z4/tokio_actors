@@ -21,7 +21,7 @@ use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::{broadcast, mpsc, oneshot}, io::{AsyncRead, AsyncWrite}};
-use crate::{actors::actor::{self, Actor, CreateActor, ActorResponse, ActorHandle, ActorMessage}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, store::new_db_pool, payment::CreditCardApiResp, auth::{CurrentUser, CurrentUserOpt}}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}};
+use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, store::new_db_pool, payment::CreditCardApiResp, auth::{CurrentUser, CurrentUserOpt}}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use sqlx::FromRow;
 use sqlx::types::time::Date;
@@ -48,8 +48,8 @@ pub struct AppState {
 pub struct SharedState {
     pub event_tx: broadcast::Sender<String>,
     pub event_rx: broadcast::Receiver<String>,
-    name: Option<String>,
-    actor_handle: ActorHandle,
+    pub name: Option<String>,
+    pub actor_handle: ActorHandle,
 }
 
 pub struct App {
@@ -182,11 +182,13 @@ impl App {
         let offer_handle = ActorHandle::new();
         let (send, recv) = oneshot::channel();
         let offer_msg = ActorMessage::GetOffers {respond_to: Some(send), offers: None };
-        let (offer_event_tx, mut offer_event_rx) = broadcast::channel(5000);
-        let offer_loop_msg = ActorMessage::GetOffersLoop {respond_to: Some(offer_event_tx), offers: None, self_pid: offer_handle.clone() };
-        let _ = offer_handle.sender.send(offer_loop_msg).await;
-        let resp = recv.await.expect("Actor task has been killed");
-        dbg!(resp);
+        // let (offer_event_tx, mut offer_event_rx) = broadcast::channel(5000);
+        // let loop_instruction = LoopInstructions {iterations: 4, listen_for: None };
+        // let offer_loop_msg = ActorMessage::GetOffersLoop {respond_to: Some(offer_event_tx), offers: None, self_pid: offer_handle.clone(), instructions: loop_instruction };
+        // let _ = offer_handle.sender.send(offer_loop_msg).await;
+        // This blocks
+        // let resp = recv.await.expect("Actor task has been killed");
+        // dbg!(resp);
         // let _ = tokio::try_join!(read_handle, write_handle);
 
         // let mut cool_header = HashMap::with_capacity(2);

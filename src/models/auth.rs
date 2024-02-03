@@ -20,7 +20,7 @@ pub struct User {
     pub username: String,
     pub email: String,
     pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
     // user_type: UserType,
 }
 
