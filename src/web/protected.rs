@@ -132,12 +132,15 @@ mod get {
         // let what = rx.recv().await;
 
         // dbg!(&what);
+
+        let events = ["new_offer", "new_event"];
     
         Sse::new(try_stream! {
             loop {
                 match offer_rx.recv().await {
                     Ok(i) => {
                         let event = Event::default()
+                            .event(events[rand::thread_rng().gen_range(0..events.len())])
                             .data(i.terms.to_string());
     
                         yield event;
