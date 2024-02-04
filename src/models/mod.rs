@@ -6,3 +6,4 @@ pub mod payment;
 pub mod error;
 pub mod credit_file;
 pub mod loan;
+pub mod application;

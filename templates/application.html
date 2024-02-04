@@ -1,15 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block nav %}
+  {% match user %}
+    {% when Some with (val) %}
+    <li class="crumb">{{val.username}}</li>
+    <div><a href="/logout">Logout</a></div>
+    {% when None %}
+    <li class="crumb">No User</li>
+    <div><a href="/login">Login</a></div>
+  {% endmatch %}
+{% endblock %}
+
 {% block content %}
   {% if let Some(message) = message %}
   <span><strong>{{ message }}</strong></span>
   {% endif %}
   <h1 class="main_header">Application for Loan</h1>
-  <form>
-    <label for="fname">First name:</label><br>
-    <input type="text" id="first_name" name="first_name"><br>
-    <label for="lname">Last name:</label><br>
-    <input type="text" id="last_name" name="last_name">
-
-    <label for="lname">Desired Loan Amount:</label><br>
-    <input type="number" id="desired_amount" name="desired_amount">
-  </form>
+  <div class="form-style">
+    {% if entity.location_id == 1 %}
+      <h2 id="consult_form_header" class="text-center">Edit Consult</h2>
+    {% else %}
+      <h2 id="consult_form_header" class="text-center">Add Consult</h2> 
+    {% endif %}
+    <div id="consult_errors"></div>
+    <form 
+      hx-boost="true"
+        action="/consult/form" 
+        method="post"
+        hx-target="#crud_api"
+        hx-push-url="/crud"
+        hx-target-400="#consult_errors"
+        hx-target-404="#consult_errors"
+        hx-target-4*="#consult_errors"
+        hx-headers='{"Content-Type": "multipart/form-data"}'
+        hx-swap="innerHTML"
+    >
+      <ul>
+        <li>
+          <select class="field-style field-split align-left" id="consult_purpose_id" name="consult_purpose_id" value="" >
+              {% for option in purpose_options %}
+                {% if entity.location_id == 1 %}
+                  {% if option.value == entity.consult_purpose_id %}
+                    <option value="{{option.value}}" selected="true">{{option.key}}</option>
+                  {% else %} 
+                    <option value="{{option.value}}">{{option.key}}</option>
+                  {% endif %} 
+                {% else %}
+                  <option value="{{option.value}}">{{option.key}}</option>
+                {% endif %}
+              {% endfor %}
+          </select>
+          <select class="field-style field-split align-right" id="consult_result_id" name="consult_result_id" value="" >
+              {% for option in result_options %}
+                {% if entity.location_id == 1 %}
+                  {% if option.value == entity.consult_result_id %}
+                    <option value="{{option.value}}" selected="true">{{option.key}}</option>
+                  {% else %} 
+                    <option value="{{option.value}}">{{option.key}}</option>
+                  {% endif %}
+                {% else %}
+                  <option value="{{option.value}}">{{option.key}}</option>
+                {% endif %}
+              {% endfor %}
+          </select>
+        </li>
+        <li>
+          <div>
+            <label for="location_id">Location, Client and # Attendees</label>
+            <select class="field-style field-full align-none" id="location_id" name="location_id">
+              {% for option in location_options %}
+                {% if entity.location_id == 1 %}
+                  {% if option.value == entity.location_id %}
+                    <option value="{{option.value}}" selected="true">{{option.key}}</option>
+                  {% else %} 
+                    <option value="{{option.value}}">{{option.key}}</option>
+                  {% endif %}
+                {% else %}
+                  <option value="{{option.value}}">{{option.key}}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+        </li>
+        <li>
+            <select class="field-style field-addr-one" id="client_id" name="client_id">
+              {% for option in client_options %}
+                {% if entity.location_id == 1 %}
+                  {% if option.value == entity.client_id %}
+                    <option value="{{option.value}}" selected="true">{{option.key}}</option>
+                  {% else %} 
+                    <option value="{{option.value}}">{{option.key}}</option>
+                  {% endif %}
+                {% else %}
+                  <option value="{{option.value}}">{{option.key}}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+            <input class="field-style field-addr-two" type="number" id="num_attendees" name="num_attendees" value="1" min="1" max="20" />
+        </li>
+        <li>
+          <select 
+            class="field-style field-split align-left" 
+            id="consultant_id" 
+            name="consultant_id"
+          >
+            {% for option in consultant_options %}
+              {% if entity.location_id == 1 %}
+                {% if option.value == entity.consultant_id %}
+                  <option value="{{option.value}}" selected="true">{{option.key}}</option>
+                {% else %} 
+                  <option value="{{option.value}}">{{option.key}}</option>
+                {% endif %}
+              {% else %}
+                <option value="{{option.value}}">{{option.key}}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+          <label class="field-split align-right container">Linfa Assign
+            <input 
+              type="checkbox" 
+              name="linfa_assign" 
+              id="linfa_assign"
+              value="true"
+              _="on click set #consultant_id.value to '0'"
+              >
+            <span class="checkmark"></span>
+          </label>
+        </li>
+  
+        <li>
+          <div>
+            <input type="date" class="field-style field-split align-left" id="consult_start_date" name="consult_start_date" placeholder="Start Date" value="" required="true" />
+          </div>
+          <div>
+            <input type="time" class="field-style field-split align-right" id="consult_start_time" name="consult_start_time" placeholder="Start Time" value="" required="true" />
+          </div>
+        </li>
+  
+        <li>
+          <div>
+            <input type="date" class="field-style field-split align-left" id="consult_end_date" name="consult_end_date" placeholder="End Date" value="" />
+          </div>
+          <div>
+            <input type="time" class="field-style field-split align-right" id="consult_end_time" name="consult_end_time" placeholder="End Time" value="" />
+          </div>
+        </li>
+  
+        <li>
+          <input type="text" id="attachment_path" name="attachment_path" class="field-style field-full align-none" placeholder="Attachment Path" value="" readonly />
+        </li>
+  
+        <li>
+          <div>
+            <input type="textarea" class="field-style field-full align-none" id="notes" name="notes" placeholder="Consult Notes (Max 200)" maxlength="200" value="" />
+          </div>
+        </li>
+  
+        <li>
+          <div>
+            <button class="field-style field-split align-left" type="submit">Submit</button>
+            <button class="field-style field-split align-right" type="reset">Clear Form</button>
+          </div>
+        </li>
+      </ul>
+    </form>
+      <form hx-encoding='multipart/form-data' hx-post='/consult/upload' hx-swap="innerHTML" hx-target="#validation_response"
+        _='on htmx:xhr:progress(loaded, total) set #progress.value to (loaded/total)*100'>
+      <input 
+        type="file" 
+        id="file_upload" 
+        name="upload"
+        accept=".jpeg,.png,.jpg,.gif,.csv,.pdf,.json"
+      >
+      <button id="upload_btn" disabled="true">
+          Upload
+      </button>
+      <progress id='progress' value='0' max='100'></progress>
+      <div id="validation_response" _="on mutation if my innerHTML != 'Error'
+                                      set #attachment_path.value to #val_p.innerHTML"></div>
+    </form>
+  </div>
+  {% call super() %}
 {% endblock %}

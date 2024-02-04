@@ -21,7 +21,7 @@ use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::{broadcast, mpsc, oneshot}, io::{AsyncRead, AsyncWrite}};
-use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}};
+use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::SelectOption, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use sqlx::FromRow;
 use sqlx::types::time::Date;
@@ -72,6 +72,33 @@ pub struct PostTemplate<'a> {
     pub post_date: String,
     pub post_body: &'a str,
     pub user: Option<CurrentUser>,
+}
+
+#[derive(Debug)]
+pub struct Application {
+    pub consultant_id: i32,
+    pub consult_result_id: i32,
+    pub location_id: i32,
+    pub consult_purpose_id: i32,
+    pub client_id: i32,
+    pub consult_start_date: String,
+    pub consult_start_time: String,
+    pub consult_end_date: String,
+    pub consult_end_time: String,
+    pub notes: String,
+}
+
+#[derive(Debug, Template)]
+#[template(path = "application.html")]
+pub struct ApplicationTemplate<'a> {
+    pub user: &'a Option<CurrentUser>,
+    pub message: Option<String>,
+    pub location_options: &'a Vec<SelectOption>,
+    pub purpose_options: &'a Vec<SelectOption>,
+    pub result_options: &'a Vec<SelectOption>,
+    pub consultant_options: &'a Vec<SelectOption>,
+    pub client_options: &'a Vec<SelectOption>,
+    pub entity: Application,
 }
 
 impl App {
@@ -252,6 +279,7 @@ impl App {
             //.route_layer(login_required!(Backend, login_url = "/login"))
             .route("/actor", get(get_actor))
             .route("/users", get(get_users))
+            .route("/application", get(get_application))
             .route("/offers", get(get_offers))
             .route("/ticker", get(get_ticker))
             .route_layer(login_required!(Backend, login_url = "/login"))
@@ -347,6 +375,43 @@ async fn get_users(
     match users {
         // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
         Ok(users) => UsersTemplate {users: &users, message: None, user: current_user}.into_response(),
+        Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
+    }
+}
+
+#[debug_handler]
+async fn get_application(
+    State(state): State<Arc<Mutex<SharedState>>>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Query(params): Query<HashMap<String,String>>,
+    auth_session: AuthSession,
+    Extension(pool): Extension<PgPool>,
+) -> Response {
+    // let msg = ActorMessage::RegularMessage { text: "Hey from get_users()".to_owned() };
+    // let _ = state.lock().unwrap().actor_handle.sender.send(msg).await;
+
+    let users = sqlx::query_as::<_, models::auth::User>(
+        "SELECT user_id, email, username, created_at, updated_at FROM users;"
+    )
+    .fetch_all(&pool)
+    .await
+    .map_err(|err| {
+        dbg!(err);
+        AppError::InternalServerError
+    });
+
+    let s_opts = vec![SelectOption { key: "One".to_owned(), value: 1 }, SelectOption { key: "Two".to_owned(), value: 2 }];
+    let app = Application { consultant_id: 1, consult_result_id: 1, location_id: 1, consult_purpose_id: 1, client_id: 1, consult_start_date: "String".to_owned(), consult_start_time: "String".to_owned(), consult_end_date: "String".to_owned(), consult_end_time: "String".to_owned(), notes: "String".to_owned() };
+
+    let current_user = 
+        match auth_session.user {
+            Some(user) => Some(CurrentUser {username: user.username, email: user.email}),
+            _ => None,
+        };
+
+    match users {
+        // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
+        Ok(users) => ApplicationTemplate { user: &current_user, message: None, location_options: &s_opts, consultant_options: &s_opts, client_options: &s_opts, purpose_options: &s_opts, result_options: &s_opts, entity: app }.into_response(),
         Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
     }
 }

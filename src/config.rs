@@ -152,7 +152,7 @@ impl From<&extract::Query<FilterOptions>> for FilterOptions {
 #[derive(Debug, Validate, Serialize, FromRow, Clone, Deserialize)]
 pub struct SelectOption {
     pub value: i32,
-    pub key: Option<String>,
+    pub key: String,
 }
 
 #[derive(Debug, Validate, Serialize, FromRow, Clone, Deserialize)]
@@ -171,8 +171,8 @@ impl FromRedisValue for SelectOptionsVec {
     }
 }
 
-impl From<(i32, Option<String>)> for SelectOption {
-    fn from(pair: (i32, Option<String>)) -> Self {
+impl From<(i32, String)> for SelectOption {
+    fn from(pair: (i32, String)) -> Self {
         let (value, key) = pair;
         SelectOption {
             key: key,
@@ -328,13 +328,13 @@ pub async fn category_options(pool: &Pool<Postgres>) -> Vec<SelectOption> {
         Ok(state_list) => state_list
             .iter()
             .map(|category| SelectOption {
-                key: Some(category.category_name.to_owned()),
+                key: category.category_name.to_owned(),
                 value: category.category_id,
             })
             .collect::<Vec<SelectOption>>(),
         Err(err) => {
             dbg!(&err);
-            vec![SelectOption::from((0, Some("Select One".to_string())))]
+            vec![SelectOption::from((0, "Select One".to_string()))]
         }
     }
 }
@@ -396,47 +396,26 @@ impl std::hash::Hash for SimpleQuery {
     }
 }
 
-pub fn states() -> Vec<StringSelectOption> {
-    vec![
-        StringSelectOption {
-            key: Some("AL".to_string()),
-            value: "AL".to_string(),
-        },
-        StringSelectOption {
-            key: Some("AR".to_string()),
-            value: "AK".to_string(),
-        },
-        StringSelectOption {
-            key: Some("AK".to_string()),
-            value: "AR".to_string(),
-        },
-        StringSelectOption {
-            key: Some("AZ".to_string()),
-            value: "AZ".to_string(),
-        },
-    ]
-}
-
 pub fn location_contacts() -> Vec<SelectOption> {
     vec![
-        SelectOption::from((1, Some("Location Admin".to_string()))),
-        SelectOption::from((2, Some("Site Manager".to_string()))),
+        SelectOption::from((1, "Location Admin".to_string())),
+        SelectOption::from((2, "Site Manager".to_string())),
     ]
 }
 
 pub fn admin_user_options() -> Vec<SelectOption> {
     vec![
-        SelectOption::from((1, Some("User 1".to_string()))),
-        SelectOption::from((2, Some("User 2".to_string()))),
+        SelectOption::from((1, "User 1".to_string())),
+        SelectOption::from((2, "User 2".to_string())),
     ]
 }
 
 pub fn user_type_options() -> Vec<SelectOption> {
     vec![
-        SelectOption::from((1, Some("admin".to_string()))),
-        SelectOption::from((2, Some("subadmin".to_string()))),
-        SelectOption::from((3, Some("regular".to_string()))),
-        SelectOption::from((4, Some("guest".to_string()))),
+        SelectOption::from((1, "admin".to_string())),
+        SelectOption::from((2, "subadmin".to_string())),
+        SelectOption::from((3, "regular".to_string())),
+        SelectOption::from((4, "guest".to_string())),
     ]
 }
 
@@ -444,11 +423,11 @@ pub fn territory_options() -> Vec<SelectOption> {
     // let file = read_yaml();
     // dbg!(&file);
     vec![
-        SelectOption::from((1, Some("National".to_string()))),
-        SelectOption::from((2, Some("Northeast".to_string()))),
-        SelectOption::from((3, Some("West".to_string()))),
-        SelectOption::from((4, Some("Southeast".to_string()))),
-        SelectOption::from((5, Some("Midwest".to_string()))),
+        SelectOption::from((1, "National".to_string())),
+        SelectOption::from((2, "Northeast".to_string())),
+        SelectOption::from((3, "West".to_string())),
+        SelectOption::from((4, "Southeast".to_string())),
+        SelectOption::from((5, "Midwest".to_string())),
     ]
 }
 
@@ -456,31 +435,31 @@ pub fn consult_result_options() -> Vec<SelectOption> {
     vec![
         SelectOption::from((
             1,
-            Some("services rendered. next meeting scheduled".to_string()),
+            "services rendered. next meeting scheduled".to_string(),
         )),
         SelectOption::from((
             2,
-            Some("services rendered. no follow up requested".to_string()),
+            "services rendered. no follow up requested".to_string(),
         )),
     ]
 }
 
 pub fn consult_purpose_options() -> Vec<SelectOption> {
     vec![
-        SelectOption::from((1, Some("Informational".to_string()))),
-        SelectOption::from((2, Some("Initial Service".to_string()))),
-        SelectOption::from((3, Some("Continued Service".to_string()))),
-        SelectOption::from((4, Some("Final Service".to_string()))),
-        SelectOption::from((5, Some("Audit".to_string()))),
+        SelectOption::from((1, "Informational".to_string())),
+        SelectOption::from((2, "Initial Service".to_string())),
+        SelectOption::from((3, "Continued Service".to_string())),
+        SelectOption::from((4, "Final Service".to_string())),
+        SelectOption::from((5, "Audit".to_string())),
     ]
 }
 
 pub fn specialty_options() -> Vec<SelectOption> {
     vec![
-        SelectOption::from((1, Some("Finance".to_string()))),
-        SelectOption::from((2, Some("Insurance".to_string()))),
-        SelectOption::from((3, Some("Technology".to_string()))),
-        SelectOption::from((4, Some("Government".to_string()))),
+        SelectOption::from((1, "Finance".to_string())),
+        SelectOption::from((2, "Insurance".to_string())),
+        SelectOption::from((3, "Technology".to_string())),
+        SelectOption::from((4, "Government".to_string())),
     ]
 }
 

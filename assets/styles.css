@@ -9,6 +9,333 @@ body {
   margin: auto;
 }
 
+input[type="date"]:before {
+  content: attr(placeholder) !important;
+  color: #aaa;
+  margin-right: 0.5em;
+}
+input[type="date"]:focus:before,
+input[type="date"]:valid:before {
+  content: "";
+}
+
+input[type="time"]:before {
+  content: attr(placeholder) !important;
+  color: #aaa;
+  margin-right: 0.5em;
+}
+input[type="time"]:focus:before,
+input[type="time"]:valid:before {
+  content: "";
+}
+
+/***********
+** Errors **
+***********/
+#api_error {
+  border: 2px solid rgb(227, 87, 87);
+  margin: 20px auto;
+  width: 80%;
+  text-align: center;
+  padding: 0;
+  list-style-type: none;
+  color: rgb(245, 54, 54);
+}
+
+/* error_div are lists */
+
+#error_div {
+  padding: 0;
+  list-style-type: none;
+  color: rgb(245, 54, 54);
+}
+
+#error_div li:not(:last-child) { 
+  border-bottom: 1px solid rgb(13, 8, 42); 
+}
+
+.error_msg {
+  color: rgb(244, 64, 64);
+  font-weight: bold;
+  font-size: small;
+}
+
+.success_msg {
+  color: green;
+  font-weight: bold;
+  font-size: small;
+}
+
+/*****************
+** Address Form **
+*****************/
+
+.form-style ul li .field-state{
+	width: 11%;
+}
+.form-style ul li .field-city{
+	width: 66%;
+}
+.form-style ul li .field-zip{
+	width: 20%;
+}
+
+.form-style ul li .field-addr-one{
+	width: 68%;
+}
+.form-style ul li .field-addr-two{
+	width: 29%;
+    float:right;
+}
+
+.form-style ul li textarea{
+	width: 100%;
+	height: 100px;
+}
+.form-style ul li button {
+	-moz-box-shadow: inset 0px 1px 0px 0px #3985B1;
+	-webkit-box-shadow: inset 0px 1px 0px 0px #3985B1;
+	box-shadow: inset 0px 1px 0px 0px #3985B1;
+	background-color: #216288;
+	border: 1px solid #17445E;
+	display: inline-block;
+	cursor: pointer;
+	color: #FFFFFF;
+	padding: 8px 18px;
+	text-decoration: none;
+	font: 12px Arial, Helvetica, sans-serif;
+}
+.form-style ul li button:hover {
+	background: linear-gradient(to bottom, #2D77A2 5%, #337DA8 100%);
+	background-color: #28739E;
+}
+
+/*************
+**** Form ****
+*************/
+
+#consultant_img {
+  width: 15em;
+  height: 15em;
+  margin: auto;
+  text-align: center;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.formcontainer {
+  text-align: left;
+  margin: 24px 50px 12px;
+}
+
+.formcontainer form {
+  line-height: 2;
+}
+
+.formcontainer input[type=text], input[type=password] {
+  width: 100%;
+  padding: 16px 8px;
+  border-radius: 5px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #232121;
+  box-sizing: border-box;
+}
+
+.form-style {
+max-width: 450px;
+background: #FAFAFA;
+padding: 30px;
+margin: 50px auto;
+box-shadow: 1px 1px 25px rgba(0, 0, 0, 0.35);
+border-radius: 10px;
+border: 6px solid #305A72;
+}
+
+.form-style label {
+  font-size: small;
+}
+
+.form-style ul{
+padding:0;
+margin:0;
+list-style:none;
+}
+
+.form-style h1 {
+  text-align: center;
+}
+
+.form-style ul li{
+display: block;
+margin-bottom: 10px;
+min-height: 35px;
+}
+
+.form-style a {
+  text-decoration: none;
+  font: 12px Arial, Helvetica, sans-serif;
+}
+
+.form-style ul li  .field-style{
+box-sizing: border-box; 
+-webkit-box-sizing: border-box;
+-moz-box-sizing: border-box; 
+padding: 8px;
+  border-radius: 5px;
+outline: none;
+border: 1px solid #B0CFE0;
+-webkit-transition: all 0.30s ease-in-out;
+-moz-transition: all 0.30s ease-in-out;
+-ms-transition: all 0.30s ease-in-out;
+-o-transition: all 0.30s ease-in-out;
+
+}.form-style ul li  .field-style:focus{
+box-shadow: 0 0 5px #B0CFE0;
+border:1px solid #B0CFE0;
+}
+.form-style ul li .field-split{
+width: 49%;
+}
+.form-style ul li .field-full{
+width: 100%;
+}
+.form-style ul li input.align-left{
+float:left;
+}
+.form-style ul li input.align-right{
+float:right;
+}
+
+#password_match {
+  text-align: center;
+}
+
+/* Customize the label (the container) */
+.container {
+  display: block;
+  position: relative;
+  text-align: left;
+  text-indent: 25px;
+  /* padding-left: 35px; */
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 22px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.align-right {
+  float: right;
+}
+/*
+Hide the browser's default checkbox
+.container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+Create a custom checkbox
+.checkmark {
+  position: absolute;
+  border-radius: 5px;
+  border: 2px solid black;
+  left: 0;
+  height: 15px;
+  width: 15px;
+  background-color: #eee;
+}
+
+On mouse-over, add a grey background color
+.container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+When the checkbox is checked, add a blue background
+.container input:checked ~ .checkmark {
+  background-color: #2196F3;
+}
+
+Create the checkmark/indicator (hidden when not checked)
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+Show the checkmark when checked
+.container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+Style the checkmark/indicator
+.container .checkmark:after {
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+*/
+
+input[type="checkbox"] {
+  appearance: none;
+  position: relative;
+  display: inline-block;
+  background: lightgrey;
+  height: 1.65rem;
+  width: 2.75rem;
+  vertical-align: middle;
+  border-radius: 2rem;
+  box-shadow: 0px 1px 3px #0003 inset;
+  transition: 0.25s linear background;
+}
+input::before {
+  content: "";
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: #fff;
+  border-radius: 1.2rem;
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  box-shadow: 0px 1px 3px #0003;
+  transition: 0.25s linear transform;
+  transform: translateX(0rem);
+}
+
+input[type="checkbox"]:checked {
+  background: green;
+}
+input[type="checkbox"]:checked::before {
+  transform: translateX(1rem);
+}
+
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid dodgerblue;
+  outline-offset: 2px;
+}
+
 form {
   width: 80%;
   margin: auto;
