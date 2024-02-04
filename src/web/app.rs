@@ -21,7 +21,7 @@ use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::{broadcast, mpsc, oneshot}, io::{AsyncRead, AsyncWrite}};
-use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::SelectOption, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}};
+use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use sqlx::FromRow;
 use sqlx::types::time::Date;
@@ -75,17 +75,24 @@ pub struct PostTemplate<'a> {
 }
 
 #[derive(Debug)]
-pub struct Application {
+pub struct Application<'a> {
     pub consultant_id: i32,
     pub consult_result_id: i32,
     pub location_id: i32,
     pub consult_purpose_id: i32,
     pub client_id: i32,
-    pub consult_start_date: String,
-    pub consult_start_time: String,
-    pub consult_end_date: String,
-    pub consult_end_time: String,
-    pub notes: String,
+    pub address_one: &'a str,
+    pub address_two: &'a str,
+    pub city: &'a str,
+    pub state: &'a str,
+    pub zip: &'a str,
+    pub phone: &'a str,
+    pub contact_id: i32,
+    pub consult_start_date: &'a str,
+    pub consult_start_time: &'a str,
+    pub consult_end_date: &'a str,
+    pub consult_end_time: &'a str,
+    pub notes: &'a str,
 }
 
 #[derive(Debug, Template)]
@@ -93,12 +100,15 @@ pub struct Application {
 pub struct ApplicationTemplate<'a> {
     pub user: &'a Option<CurrentUser>,
     pub message: Option<String>,
+    pub validation_errors: FormErrorResponse,
     pub location_options: &'a Vec<SelectOption>,
     pub purpose_options: &'a Vec<SelectOption>,
     pub result_options: &'a Vec<SelectOption>,
     pub consultant_options: &'a Vec<SelectOption>,
     pub client_options: &'a Vec<SelectOption>,
-    pub entity: Application,
+    pub state_options: &'a Vec<SelectOption>,
+    pub contact_options: &'a Vec<SelectOption>,
+    pub entity: Option<Application<'a>>,
 }
 
 impl App {
@@ -401,7 +411,7 @@ async fn get_application(
     });
 
     let s_opts = vec![SelectOption { key: "One".to_owned(), value: 1 }, SelectOption { key: "Two".to_owned(), value: 2 }];
-    let app = Application { consultant_id: 1, consult_result_id: 1, location_id: 1, consult_purpose_id: 1, client_id: 1, consult_start_date: "String".to_owned(), consult_start_time: "String".to_owned(), consult_end_date: "String".to_owned(), consult_end_time: "String".to_owned(), notes: "String".to_owned() };
+    let app = Application {consultant_id:1,consult_result_id:1,location_id:1,city:"",consult_purpose_id:1,client_id:1,consult_start_date:"String",consult_start_time:"String",consult_end_date:"String",consult_end_time:"String",notes:"String", address_one: "", address_two: "", state: "", zip: "", phone: "", contact_id: 1};
 
     let current_user = 
         match auth_session.user {
@@ -411,7 +421,7 @@ async fn get_application(
 
     match users {
         // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
-        Ok(users) => ApplicationTemplate { user: &current_user, message: None, location_options: &s_opts, consultant_options: &s_opts, client_options: &s_opts, purpose_options: &s_opts, result_options: &s_opts, entity: app }.into_response(),
+        Ok(users) => ApplicationTemplate {user: &current_user,message:None,location_options: &s_opts,consultant_options: &s_opts,client_options: &s_opts,purpose_options: &s_opts,result_options: &s_opts, entity: Some(app), validation_errors: FormErrorResponse { errors: None }, state_options: &s_opts, contact_options: &s_opts}.into_response(),
         Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
     }
 }

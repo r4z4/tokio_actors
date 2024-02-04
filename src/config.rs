@@ -95,13 +95,13 @@ lazy_static! {
     ];
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct ValidationErrorMap {
     pub key: String,
     pub errs: Vec<ValidationError>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Debug)]
 pub struct FormErrorResponse {
     pub errors: Option<Vec<ValidationErrorMap>>,
 }
