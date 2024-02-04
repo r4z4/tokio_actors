@@ -17,23 +17,24 @@
   {% if let Some(message) = message %}
   <span><strong>{{ message }}</strong></span>
   {% endif %}
+<div id="application_form">
   <h1 class="main_header">Application for Loan</h1>
   <div class="form-style">
     {% if let Some(entity) = entity %}
-      <h2 id="consult_form_header" class="text-center">Edit App</h2>
+      <h2 id="application_form_header" class="text-center">Edit App</h2>
     {% else %}
-      <h2 id="consult_form_header" class="text-center">New App</h2> 
+      <h2 id="application_form_header" class="text-center">New App</h2> 
     {% endif %}
-    <div id="consult_errors"></div>
+    <div id="application_errors"></div>
     <form 
       hx-boost="true"
-        action="/consult/form" 
+        action="/apply" 
         method="post"
-        hx-target="#crud_api"
-        hx-push-url="/crud"
-        hx-target-400="#consult_errors"
-        hx-target-404="#consult_errors"
-        hx-target-4*="#consult_errors"
+        hx-target="#application_form"
+        hx-push-url="/offers"
+        hx-target-400="#application_errors"
+        hx-target-404="#application_errors"
+        hx-target-4*="#application_errors"
         hx-headers='{"Content-Type": "multipart/form-data"}'
         hx-swap="innerHTML"
     >
@@ -138,26 +139,7 @@
             <input type="date" class="field-style field-split align-left" id="consult_start_date" name="consult_start_date" placeholder="Start Date" value="" required="true" />
           </div>
           <div>
-            <input type="time" class="field-style field-split align-right" id="consult_start_time" name="consult_start_time" placeholder="Start Time" value="" required="true" />
-          </div>
-        </li>
-  
-        <li>
-          <div>
-            <input type="date" class="field-style field-split align-left" id="consult_end_date" name="consult_end_date" placeholder="End Date" value="" />
-          </div>
-          <div>
-            <input type="time" class="field-style field-split align-right" id="consult_end_time" name="consult_end_time" placeholder="End Time" value="" />
-          </div>
-        </li>
-  
-        <li>
-          <input type="text" id="attachment_path" name="attachment_path" class="field-style field-full align-none" placeholder="Attachment Path" value="" readonly />
-        </li>
-  
-        <li>
-          <div>
-            <input type="textarea" class="field-style field-full align-none" id="notes" name="notes" placeholder="Consult Notes (Max 200)" maxlength="200" value="" />
+            <input type="date" class="field-style field-split align-right" id="consult_end_date" name="consult_end_date" placeholder="End Date" value="" />
           </div>
         </li>
   
@@ -169,21 +151,7 @@
         </li>
       </ul>
     </form>
-      <form hx-encoding='multipart/form-data' hx-post='/consult/upload' hx-swap="innerHTML" hx-target="#validation_response"
-        _='on htmx:xhr:progress(loaded, total) set #progress.value to (loaded/total)*100'>
-      <input 
-        type="file" 
-        id="file_upload" 
-        name="upload"
-        accept=".jpeg,.png,.jpg,.gif,.csv,.pdf,.json"
-      >
-      <button id="upload_btn" disabled="true">
-          Upload
-      </button>
-      <progress id='progress' value='0' max='100'></progress>
-      <div id="validation_response" _="on mutation if my innerHTML != 'Error'
-                                      set #attachment_path.value to #val_p.innerHTML"></div>
-    </form>
   </div>
+</div>
   {% call super() %}
 {% endblock %}

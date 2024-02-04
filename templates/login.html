@@ -59,7 +59,7 @@
       <legend>User login</legend>
       <p>
         <label for="username">Username</label>
-        <input name="username" id="username" value="aaron" />
+        <input name="username" id="username" type="text" value="aaron" />
       </p>
       <p>
         <label for="password">Password</label>
@@ -81,7 +81,18 @@
     {% endif %}
   </form>
   <div class="auth_footer">
-    <p>No account? <a href="/register">Register here.</a></p>
+    <div class="form_link_container">
+      <span class="reg">
+          <a href="/register"
+          > No account? Register here
+          </a>
+      </span>
+      <span class="psw">
+          <a href="/forgot-password"
+          > Forgot password?
+          </a>
+      </span>
+    </div>
   </div>
   {% call super() %}
 {% endblock %}

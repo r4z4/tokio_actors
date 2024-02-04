@@ -21,7 +21,7 @@ use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::{broadcast, mpsc, oneshot}, io::{AsyncRead, AsyncWrite}};
-use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{auth, protected, public, ws::read_and_send_messages}};
+use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{api, auth, protected, public, ws::read_and_send_messages}};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use sqlx::FromRow;
 use sqlx::types::time::Date;
@@ -287,6 +287,7 @@ impl App {
 
         let protected_app = protected::router()
             //.route_layer(login_required!(Backend, login_url = "/login"))
+            .merge(api::router())
             .route("/actor", get(get_actor))
             .route("/users", get(get_users))
             .route("/application", get(get_application))

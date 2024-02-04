@@ -61,23 +61,35 @@
         </p>
         <p>
           <label for="username">Username</label>
-          <input name="username" id="username" />
+          <input type="text" name="username" id="username" />
         </p>
         <p>
           <label for="password">Password</label>
           <input
             name="password"
-            id="password"
+            id="password_input"
             type="password"
           />
         </p>
+        <div id="password_match"></div>
         <p>
           <label for="confirm_password">Confirm Password</label>
-          <input
-            name="confirm_password"
-            id="confirm_password"
-            type="password"
-          />
+          <input 
+              class="field-style field-full align-none" 
+              type="password" 
+              placeholder="Re-Enter Password" 
+              name="confirm_password" 
+              _="on keyup
+                  if my value is not empty
+                      if my value == #password_input.value
+                          put '✅ Passwords Match' into #password_match
+                      otherwise
+                          put '❌ Passwords Do Not Match' into #password_match
+                      end
+                  otherwise
+                      put '' into #password_match
+                  end" 
+              required>
         </p>
       </fieldset>
 
@@ -86,8 +98,6 @@
       </div>
 
     </form>
-    <div class="auth_footer">
-      <p>Already have an account? <a href="/login">Log in here.</a></p>
-    </div>
+    <div class="form_link_container" style="background-color: #7b777b"><p><a href="/login">Already have an account? Login here.</a></p></div>
   {% call super() %}
 {% endblock %}

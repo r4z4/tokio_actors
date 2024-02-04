@@ -7,4 +7,5 @@ mod app;
 mod auth;
 mod public;
 mod protected;
+mod api;
 pub mod utils;

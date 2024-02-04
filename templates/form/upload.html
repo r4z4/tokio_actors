@@ -1,0 +1,15 @@
+<form hx-encoding='multipart/form-data' hx-post='/consult/upload' hx-swap="innerHTML" hx-target="#validation_response"
+    _='on htmx:xhr:progress(loaded, total) set #progress.value to (loaded/total)*100'>
+  <input 
+    type="file" 
+    id="file_upload" 
+    name="upload"
+    accept=".jpeg,.png,.jpg,.gif,.csv,.pdf,.json"
+  >
+  <button id="upload_btn" disabled="true">
+    Upload
+  </button>
+  <progress id='progress' value='0' max='100'></progress>
+  <div id="validation_response" _="on mutation if my innerHTML != 'Error'
+                                set #attachment_path.value to #val_p.innerHTML"></div>
+</form>

@@ -56,7 +56,7 @@ pub enum ActorMessage {
     }
 }
 
-fn aggregate_offers(num_lenders: i32) -> HashMap<i32, Vec<Offer>> {
+pub fn aggregate_offers(num_lenders: i32) -> HashMap<i32, Vec<Offer>> {
     let mut offers_map = HashMap::new();
     for n in 0..num_lenders {
         dbg!(&n);
