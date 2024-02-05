@@ -1,74 +1,99 @@
-  <ul>
-    <li>
-      <!-- If invalid, change aria-invalid attribute to "true" -->
-      {% match validation_errors.errors %}
-        {% when Some with (errors) %}
-            <strong>{{errors|json}}</strong>
-        {% when None %}
-      {% endmatch %}
-    </li>
-    <li>
-    {% match entity %}
-        {% when Some with (entity) %}
-            <input type="text" id="address_one" name="address_one" class="field-style field-addr-one" placeholder="Address" value="{{entity.address_one}}" required="true" />
-            <input type="text" id="address_two" name="address_two" class="field-style field-addr-two" placeholder="Apt, Ste etc.. (Optional)" maxlength="10" value="{{entity.address_two}}" />
-        {% when None %}
-            <input type="text" id="address_one" name="address_one" class="field-style field-addr-one" placeholder="Address" value="" required="true" />
-            <input type="text" id="address_two" name="address_two" class="field-style field-addr-two" placeholder="Apt, Ste etc.. (Optional)" maxlength="10" value="" />
+<h4 class="form_heading">Address</h4>
+<ul>
+  <li>
+    <!-- If invalid, change aria-invalid attribute to "true" -->
+    {% match validation_errors.errors %}
+      {% when Some with (errors) %}
+          <strong>{{errors|json}}</strong>
+      {% when None %}
     {% endmatch %}
-    </li>
-    <li>
-    {% match entity %}
-        {% when Some with (entity) %}
-            <input type="text" name="city" class="field-style field-city" placeholder="City" maxlength="28" value="{{entity.city}}" required="true" />
-            <select class="field-style field-state" id="state" name="state" value="{{entity.state}}" required>
-        {% when None %}
-            <input type="text" name="city" class="field-style field-city" placeholder="City" maxlength="28" value="" required="true" />
-            <select class="field-style field-state" id="state" name="state" value="" required>
-    {% endmatch %}
-          {% for option in state_options %}
-            {# Only check for the match if have an entity. Else get an error. #}
-            {% match entity %}
-            {% when Some with (entity) %}
-              {% if option.key == entity.state %}
-                <option value="{{option.value}}" selected="true">{{option.key}}</option>
-              {% else %} 
-                <option value="{{option.value}}">{{option.key}}</option>
-              {% endif %}
-            {% when None %}
+  </li>
+  <li>
+  {% match entity %}
+      {% when Some with (entity) %}
+          <input type="text" id="address_one" name="address_one" class="field-style field-addr-one" placeholder="Address" value="{{entity.address_one}}" required="true" />
+          <input type="text" id="address_two" name="address_two" class="field-style field-addr-two" placeholder="Apt, Ste etc.. (Optional)" maxlength="10" value="{{entity.address_two}}" />
+      {% when None %}
+          <input type="text" id="address_one" name="address_one" class="field-style field-addr-one" placeholder="Address" value="" required="true" />
+          <input type="text" id="address_two" name="address_two" class="field-style field-addr-two" placeholder="Apt, Ste etc.. (Optional)" maxlength="10" value="" />
+  {% endmatch %}
+  </li>
+  <li>
+  {% match entity %}
+      {% when Some with (entity) %}
+          <input type="text" name="city" class="field-style field-city" placeholder="City" maxlength="28" value="{{entity.city}}" required="true" />
+          <select class="field-style field-state" id="state" name="state" value="{{entity.state}}" required>
+      {% when None %}
+          <input type="text" name="city" class="field-style field-city" placeholder="City" maxlength="28" value="" required="true" />
+          <select class="field-style field-state" id="state" name="state" value="" required>
+  {% endmatch %}
+        {% for option in state_options %}
+          {# Only check for the match if have an entity. Else get an error. #}
+          {% match entity %}
+          {% when Some with (entity) %}
+            {% if option.key == entity.state %}
+              <option value="{{option.value}}" selected="true">{{option.key}}</option>
+            {% else %} 
               <option value="{{option.value}}">{{option.key}}</option>
-            {% endmatch %}
-          {% endfor %}
-      </select>
-      {% match entity %}
-        {% when Some with (entity) %}
-            <input type="text" name="zip" class="field-style field-zip" placeholder="Zip" pattern="[0-9]{5}" maxlength="5" value="{{entity.zip}}" required="true" />
-        {% when None %}
-            <input type="text" name="zip" class="field-style field-zip" placeholder="Zip" pattern="[0-9]{5}" maxlength="5" value="" required="true" />
-      {% endmatch %}
-    </li>
-    <li>
+            {% endif %}
+          {% when None %}
+            <option value="{{option.value}}">{{option.key}}</option>
+          {% endmatch %}
+        {% endfor %}
+    </select>
     {% match entity %}
-        {% when Some with (entity) %}
-            <input type="tel" name="phone" id="phone_input" class="field-style field-split align-left" placeholder="000-000-0000" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" value="{{entity.phone}}" />
-            <select class="field-style field-split align-right" id="contact_id" name="contact_id" value="{{entity.contact_id}}">
-        {% when None %}
-            <input type="tel" name="phone" id="phone_input" class="field-style field-split align-left" placeholder="000-000-0000" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" value="" />
-            <select class="field-style field-split align-right" id="contact_id" name="contact_id" value="">
+      {% when Some with (entity) %}
+          <input type="text" name="zip" class="field-style field-zip" placeholder="Zip" pattern="[0-9]{5}" maxlength="5" value="{{entity.zip}}" required="true" />
+      {% when None %}
+          <input type="text" name="zip" class="field-style field-zip" placeholder="Zip" pattern="[0-9]{5}" maxlength="5" value="" required="true" />
     {% endmatch %}
-          {% for option in contact_options %}
-            {# Only check for the match if have an entity. Else get an error. #}
-            {% match entity %}
-            {% when Some with (entity) %}
-              {% if option.value == entity.contact_id %}
-                <option value="{{option.value}}" selected="true">{{option.key}}</option>
-              {% else %} 
-                <option value="{{option.value}}">{{option.key}}</option>
-              {% endif %}
-            {% when None %}
+  </li>
+  <li>
+  {% match entity %}
+      {% when Some with (entity) %}
+      <div class="two_col_grid">
+        <div class="field-style">
+          <label for="phone_input">Phone</label>
+          <input type="tel" name="phone" id="phone_input" placeholder="000-000-0000" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" value="{{entity.phone}}" />
+        </div>
+        <div class="field-style">
+          <label for="ssn_input">SSN</label>
+          <input type="text" name="ssn" id="ssn_input" placeholder="000-00-0000" pattern="[0-9]{3}-[0-9]{2}-[0-9]{4}" value="{{entity.ssn}}" required="true" />
+        </div>
+      </div>
+      {% when None %}
+      <div class="two_col_grid">
+        <div class="field-style">
+          <label for="phone_input">Phone</label>
+          <input type="tel" name="phone" id="phone_input" placeholder="000-000-0000" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" value="" />
+        </div>
+        <div class="field-style">            
+          <label for="ssn_input">SSN</label>
+          <input type="text" name="ssn" id="ssn_input" placeholder="000-00-0000" pattern="[0-9]{3}-[0-9]{2}-[0-9]{4}" value="" required="true"  />
+        </div>
+      </div>
+  {% endmatch %}
+  </li>
+  <li><label for="dob_input">DOB & Marital Status</label></li>
+  <li>
+    {% match entity %}
+      {% when Some with (entity) %}
+        <input class="field-style field-split align-left" type="date" id="dob" name="dob" placeholder="DOB" value="{{entity.dob}}" required="true" />
+      {% when None %}
+        <input class="field-style field-split align-left" type="date" id="dob" name="dob" placeholder="DOB" value="" required="true" />
+    {% endmatch %}
+      <select class="field-style field-split align-right" id="marital_status" name="marital_status" value="" >
+        {% for option in marital_options %}
+          {% if let Some(entity) = entity %}
+            {% if option.value == entity.purpose_id %}
+              <option value="{{option.value}}" selected="true">{{option.key}}</option>
+            {% else %} 
               <option value="{{option.value}}">{{option.key}}</option>
-            {% endmatch %}
-          {% endfor %}
-      </select>
-    </li>
-  </ul>
+            {% endif %} 
+          {% else %}
+            <option value="{{option.value}}">{{option.key}}</option>
+          {% endif %}
+        {% endfor %}
+    </select>
+  </li>
+</ul>

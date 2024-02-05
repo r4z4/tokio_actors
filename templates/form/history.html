@@ -1,0 +1,100 @@
+<h4 class="form_heading">History</h4>
+<ul>
+    <li>
+      <select class="field-style field-split align-left" id="consult_purpose_id" name="consult_purpose_id" value="" >
+          {% for option in purpose_options %}
+            {% if let Some(entity) = entity %}
+              {% if option.value == entity.purpose_id %}
+                <option value="{{option.value}}" selected="true">{{option.key}}</option>
+              {% else %} 
+                <option value="{{option.value}}">{{option.key}}</option>
+              {% endif %} 
+            {% else %}
+              <option value="{{option.value}}">{{option.key}}</option>
+            {% endif %}
+          {% endfor %}
+      </select>
+      <select class="field-style field-split align-right" id="consult_result_id" name="consult_result_id" value="" >
+          {% for option in employment_options %}
+            {% if let Some(entity) = entity %}
+              {% if option.value == entity.employment_status %}
+                <option value="{{option.value}}" selected="true">{{option.key}}</option>
+              {% else %} 
+                <option value="{{option.value}}">{{option.key}}</option>
+              {% endif %}
+            {% else %}
+              <option value="{{option.value}}">{{option.key}}</option>
+            {% endif %}
+          {% endfor %}
+      </select>
+    </li>
+    <li>
+      <div>
+        <select class="field-style field-full align-none" id="location_id" name="location_id">
+          {% for option in location_options %}
+            {% if let Some(entity) = entity %}
+              {% if option.value == entity.location_id %}
+                <option value="{{option.value}}" selected="true">{{option.key}}</option>
+              {% else %} 
+                <option value="{{option.value}}">{{option.key}}</option>
+              {% endif %}
+            {% else %}
+              <option value="{{option.value}}">{{option.key}}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+    </li>
+    <li>
+        <select class="field-style field-addr-one" id="client_id" name="client_id">
+          {% for option in homeownership_options %}
+            {% if let Some(entity) = entity %}
+              {% if option.value == entity.homeownership %}
+                <option value="{{option.value}}" selected="true">{{option.key}}</option>
+              {% else %} 
+                <option value="{{option.value}}">{{option.key}}</option>
+              {% endif %}
+            {% else %}
+              <option value="{{option.value}}">{{option.key}}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+        <input class="field-style field-addr-two" type="number" id="num_attendees" name="num_attendees" value="1" min="1" max="20" />
+    </li>
+    <li>
+      <select 
+        class="field-style field-split align-left" 
+        id="consultant_id" 
+        name="consultant_id"
+      >
+        {% for option in consultant_options %}
+          {% if let Some(entity) = entity %}
+            {% if option.value == entity.consultant_id %}
+              <option value="{{option.value}}" selected="true">{{option.key}}</option>
+            {% else %} 
+              <option value="{{option.value}}">{{option.key}}</option>
+            {% endif %}
+          {% else %}
+            <option value="{{option.value}}">{{option.key}}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+      <label class="field-split align-right container">Linfa Assign
+        <input 
+          type="checkbox" 
+          name="linfa_assign" 
+          id="linfa_assign"
+          value="true"
+          _="on click set #consultant_id.value to '0'"
+          >
+        <span class="checkmark"></span>
+      </label>
+    </li>
+
+    <li>
+      <div>
+        <button class="field-style field-split align-left" type="submit">Submit</button>
+        <button class="field-style field-split align-right" type="reset">Clear Form</button>
+      </div>
+    </li>
+  </ul>

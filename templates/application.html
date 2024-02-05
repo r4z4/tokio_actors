@@ -31,7 +31,7 @@
         action="/apply" 
         method="post"
         hx-target="#application_form"
-        hx-push-url="/offers"
+        hx-push-url="/apply/offers"
         hx-target-400="#application_errors"
         hx-target-404="#application_errors"
         hx-target-4*="#application_errors"
@@ -41,115 +41,8 @@
 
     {% include "form/address.html" %}
 
-      <ul>
-        <li>
-          <select class="field-style field-split align-left" id="consult_purpose_id" name="consult_purpose_id" value="" >
-              {% for option in purpose_options %}
-                {% if let Some(entity) = entity %}
-                  {% if option.value == entity.consult_purpose_id %}
-                    <option value="{{option.value}}" selected="true">{{option.key}}</option>
-                  {% else %} 
-                    <option value="{{option.value}}">{{option.key}}</option>
-                  {% endif %} 
-                {% else %}
-                  <option value="{{option.value}}">{{option.key}}</option>
-                {% endif %}
-              {% endfor %}
-          </select>
-          <select class="field-style field-split align-right" id="consult_result_id" name="consult_result_id" value="" >
-              {% for option in result_options %}
-                {% if let Some(entity) = entity %}
-                  {% if option.value == entity.consult_result_id %}
-                    <option value="{{option.value}}" selected="true">{{option.key}}</option>
-                  {% else %} 
-                    <option value="{{option.value}}">{{option.key}}</option>
-                  {% endif %}
-                {% else %}
-                  <option value="{{option.value}}">{{option.key}}</option>
-                {% endif %}
-              {% endfor %}
-          </select>
-        </li>
-        <li>
-          <div>
-            <label for="location_id">Location, Client and # Attendees</label>
-            <select class="field-style field-full align-none" id="location_id" name="location_id">
-              {% for option in location_options %}
-                {% if let Some(entity) = entity %}
-                  {% if option.value == entity.location_id %}
-                    <option value="{{option.value}}" selected="true">{{option.key}}</option>
-                  {% else %} 
-                    <option value="{{option.value}}">{{option.key}}</option>
-                  {% endif %}
-                {% else %}
-                  <option value="{{option.value}}">{{option.key}}</option>
-                {% endif %}
-              {% endfor %}
-            </select>
-          </div>
-        </li>
-        <li>
-            <select class="field-style field-addr-one" id="client_id" name="client_id">
-              {% for option in client_options %}
-                {% if let Some(entity) = entity %}
-                  {% if option.value == entity.client_id %}
-                    <option value="{{option.value}}" selected="true">{{option.key}}</option>
-                  {% else %} 
-                    <option value="{{option.value}}">{{option.key}}</option>
-                  {% endif %}
-                {% else %}
-                  <option value="{{option.value}}">{{option.key}}</option>
-                {% endif %}
-              {% endfor %}
-            </select>
-            <input class="field-style field-addr-two" type="number" id="num_attendees" name="num_attendees" value="1" min="1" max="20" />
-        </li>
-        <li>
-          <select 
-            class="field-style field-split align-left" 
-            id="consultant_id" 
-            name="consultant_id"
-          >
-            {% for option in consultant_options %}
-              {% if let Some(entity) = entity %}
-                {% if option.value == entity.consultant_id %}
-                  <option value="{{option.value}}" selected="true">{{option.key}}</option>
-                {% else %} 
-                  <option value="{{option.value}}">{{option.key}}</option>
-                {% endif %}
-              {% else %}
-                <option value="{{option.value}}">{{option.key}}</option>
-              {% endif %}
-            {% endfor %}
-          </select>
-          <label class="field-split align-right container">Linfa Assign
-            <input 
-              type="checkbox" 
-              name="linfa_assign" 
-              id="linfa_assign"
-              value="true"
-              _="on click set #consultant_id.value to '0'"
-              >
-            <span class="checkmark"></span>
-          </label>
-        </li>
-  
-        <li>
-          <div>
-            <input type="date" class="field-style field-split align-left" id="consult_start_date" name="consult_start_date" placeholder="Start Date" value="" required="true" />
-          </div>
-          <div>
-            <input type="date" class="field-style field-split align-right" id="consult_end_date" name="consult_end_date" placeholder="End Date" value="" />
-          </div>
-        </li>
-  
-        <li>
-          <div>
-            <button class="field-style field-split align-left" type="submit">Submit</button>
-            <button class="field-style field-split align-right" type="reset">Clear Form</button>
-          </div>
-        </li>
-      </ul>
+    {% include "form/history.html" %}
+
     </form>
   </div>
 </div>

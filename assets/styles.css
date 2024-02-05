@@ -26,6 +26,10 @@ input[type="date"]{
   border-radius: 3px;
 }
 
+.two_col_grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
 /* input[type="time"]:before {
   content: attr(placeholder) !important;
   color: #aaa;
@@ -166,7 +170,7 @@ input[type="time"]:valid:before {
   width: 100%;
 }
 
-input[type=text], input[type=password], input[type=email] {
+input[type=text], input[type=password], input[type=email], input[type=tel] {
   width: 100%;
   padding: 16px 8px;
   border-radius: 5px;

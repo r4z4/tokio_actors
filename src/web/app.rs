@@ -77,22 +77,19 @@ pub struct PostTemplate<'a> {
 #[derive(Debug)]
 pub struct Application<'a> {
     pub consultant_id: i32,
-    pub consult_result_id: i32,
+    pub employment_status: i32,
     pub location_id: i32,
-    pub consult_purpose_id: i32,
-    pub client_id: i32,
+    pub purpose_id: i32,
+    pub homeownership: i32,
     pub address_one: &'a str,
     pub address_two: &'a str,
     pub city: &'a str,
     pub state: &'a str,
     pub zip: &'a str,
     pub phone: &'a str,
+    pub ssn: &'a str,
     pub contact_id: i32,
-    pub consult_start_date: &'a str,
-    pub consult_start_time: &'a str,
-    pub consult_end_date: &'a str,
-    pub consult_end_time: &'a str,
-    pub notes: &'a str,
+    pub dob: &'a str,
 }
 
 #[derive(Debug, Template)]
@@ -103,9 +100,10 @@ pub struct ApplicationTemplate<'a> {
     pub validation_errors: FormErrorResponse,
     pub location_options: &'a Vec<SelectOption>,
     pub purpose_options: &'a Vec<SelectOption>,
-    pub result_options: &'a Vec<SelectOption>,
+    pub marital_options: &'a Vec<SelectOption>,
+    pub employment_options: &'a Vec<SelectOption>,
     pub consultant_options: &'a Vec<SelectOption>,
-    pub client_options: &'a Vec<SelectOption>,
+    pub homeownership_options: &'a Vec<SelectOption>,
     pub state_options: &'a Vec<SelectOption>,
     pub contact_options: &'a Vec<SelectOption>,
     pub entity: Option<Application<'a>>,
@@ -150,17 +148,17 @@ impl App {
             .allow_credentials(true)
             .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
 
-        let random_data_base = "https://random-data-api.com/api/v2/";
-        let entity = "credit_cards";
+        // let random_data_base = "https://random-data-api.com/api/v2/";
+        // let entity = "credit_cards";
 
-        let url = random_data_base.to_owned() + entity;
+        // let url = random_data_base.to_owned() + entity;
 
-        let resp = reqwest::get(url)
-            .await?
-            .json::<CreditCardApiResp>()
-            .await?;
+        // let resp = reqwest::get(url)
+        //     .await?
+        //     .json::<CreditCardApiResp>()
+        //     .await?;
 
-        dbg!(resp);
+        // dbg!(resp);
 
         // let (offer_tx, mut offer_rx) = broadcast::channel(5000);
 
@@ -412,7 +410,7 @@ async fn get_application(
     });
 
     let s_opts = vec![SelectOption { key: "One".to_owned(), value: 1 }, SelectOption { key: "Two".to_owned(), value: 2 }];
-    let app = Application {consultant_id:1,consult_result_id:1,location_id:1,city:"",consult_purpose_id:1,client_id:1,consult_start_date:"String",consult_start_time:"String",consult_end_date:"String",consult_end_time:"String",notes:"String", address_one: "", address_two: "", state: "", zip: "", phone: "", contact_id: 1};
+    let app = Application {consultant_id:1,employment_status:1,location_id:1,city:"",purpose_id:1,homeownership:1,ssn:"444-33-4444", dob: "", address_one: "", address_two: "", state: "", zip: "", phone: "", contact_id: 1};
 
     let current_user = 
         match auth_session.user {
@@ -422,7 +420,7 @@ async fn get_application(
 
     match users {
         // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
-        Ok(users) => ApplicationTemplate {user: &current_user,message:None,location_options: &s_opts,consultant_options: &s_opts,client_options: &s_opts,purpose_options: &s_opts,result_options: &s_opts, entity: Some(app), validation_errors: FormErrorResponse { errors: None }, state_options: &s_opts, contact_options: &s_opts}.into_response(),
+        Ok(users) => ApplicationTemplate {user: &current_user,message:None,location_options: &s_opts,consultant_options: &s_opts,marital_options: &s_opts, employment_options: &s_opts,purpose_options: &s_opts,homeownership_options: &s_opts, entity: None, validation_errors: FormErrorResponse { errors: None }, state_options: &s_opts, contact_options: &s_opts}.into_response(),
         Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
     }
 }

@@ -7,11 +7,14 @@
     <div>
         {% if let Some(lc_offers) = lc_offers %}
             {% for offer in lc_offers %}
-            <ul class="offer_list">
-                <li>Servicer: {{ offer.servicer_id }}</li>
-                <li>Terms: {{ offer.terms }}</li>
-                <li>Maximum Amount: {{ offer.max_amount }}</li>
-            </ul>
+            <div hx-get="/offer-score" hx-target="#offer_score_{{offer.offer_slug}}" hx-trigger="load">
+                <ul class="offer_list">
+                    <li>Servicer: {{ offer.servicer_id }}</li>
+                    <li>Terms: {{ offer.terms }}</li>
+                    <li>Maximum Amount: {{ offer.max_amount }}</li>
+                </ul>
+                <div id="offer_score_{{offer.offer_slug}}"></div>
+            </div>
             {% endfor %}
         {% endif %}
     </div>

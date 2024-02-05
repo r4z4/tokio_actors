@@ -4,6 +4,7 @@ use std::{fs::File, io::Write};
 use chrono::{Utc, NaiveDate, Datelike};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use sqlx::types::Uuid;
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio::time::{sleep, Duration};
 
@@ -88,6 +89,7 @@ pub fn mock_offer(servicer_id: i32) -> Offer {
     let percent_fees = [1.5,2.5,3.3,4.2,5.3];
     let aprs = [6.0,6.8,7.2,8.4,9.6,12.4,14.7];
     Offer {
+        offer_slug: Uuid::new_v4().to_string(),
         servicer_id: servicer_id,
         max_amount: test_mins[rand::thread_rng().gen_range(0..test_mins.len())],
         min_amount: test_maxes[rand::thread_rng().gen_range(0..test_maxes.len())],

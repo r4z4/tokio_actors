@@ -6,6 +6,7 @@ use crate::web::utils::validate_amount;
 
 #[derive(Debug, Validate, Serialize, Clone, FromRow, Deserialize)]
 pub struct Offer {
+    pub offer_slug: String,
     pub servicer_id: i32,
     pub max_amount: i32,
     #[validate(custom = "validate_amount")]
