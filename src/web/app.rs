@@ -21,7 +21,7 @@ use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::{broadcast, mpsc, oneshot}, io::{AsyncRead, AsyncWrite}};
-use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{api, auth, protected, public, ws::read_and_send_messages}};
+use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{employment_options, marital_status_options, purpose_options, FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, application::ApplicationTemplate, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{api, auth, protected, public, ws::read_and_send_messages}};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use sqlx::FromRow;
 use sqlx::types::time::Date;
@@ -72,41 +72,6 @@ pub struct PostTemplate<'a> {
     pub post_date: String,
     pub post_body: &'a str,
     pub user: Option<CurrentUser>,
-}
-
-#[derive(Debug)]
-pub struct Application<'a> {
-    pub consultant_id: i32,
-    pub employment_status: i32,
-    pub location_id: i32,
-    pub purpose_id: i32,
-    pub homeownership: i32,
-    pub address_one: &'a str,
-    pub address_two: &'a str,
-    pub city: &'a str,
-    pub state: &'a str,
-    pub zip: &'a str,
-    pub phone: &'a str,
-    pub ssn: &'a str,
-    pub contact_id: i32,
-    pub dob: &'a str,
-}
-
-#[derive(Debug, Template)]
-#[template(path = "application.html")]
-pub struct ApplicationTemplate<'a> {
-    pub user: &'a Option<CurrentUser>,
-    pub message: Option<String>,
-    pub validation_errors: FormErrorResponse,
-    pub location_options: &'a Vec<SelectOption>,
-    pub purpose_options: &'a Vec<SelectOption>,
-    pub marital_options: &'a Vec<SelectOption>,
-    pub employment_options: &'a Vec<SelectOption>,
-    pub consultant_options: &'a Vec<SelectOption>,
-    pub homeownership_options: &'a Vec<SelectOption>,
-    pub state_options: &'a Vec<SelectOption>,
-    pub contact_options: &'a Vec<SelectOption>,
-    pub entity: Option<Application<'a>>,
 }
 
 impl App {
@@ -409,9 +374,6 @@ async fn get_application(
         AppError::InternalServerError
     });
 
-    let s_opts = vec![SelectOption { key: "One".to_owned(), value: 1 }, SelectOption { key: "Two".to_owned(), value: 2 }];
-    let app = Application {consultant_id:1,employment_status:1,location_id:1,city:"",purpose_id:1,homeownership:1,ssn:"444-33-4444", dob: "", address_one: "", address_two: "", state: "", zip: "", phone: "", contact_id: 1};
-
     let current_user = 
         match auth_session.user {
             Some(user) => Some(CurrentUser {username: user.username, email: user.email}),
@@ -420,7 +382,7 @@ async fn get_application(
 
     match users {
         // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
-        Ok(users) => ApplicationTemplate {user: &current_user,message:None,location_options: &s_opts,consultant_options: &s_opts,marital_options: &s_opts, employment_options: &s_opts,purpose_options: &s_opts,homeownership_options: &s_opts, entity: None, validation_errors: FormErrorResponse { errors: None }, state_options: &s_opts, contact_options: &s_opts}.into_response(),
+        Ok(users) => ApplicationTemplate::new(current_user).into_response(),
         Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
     }
 }

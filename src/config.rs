@@ -396,10 +396,12 @@ impl std::hash::Hash for SimpleQuery {
     }
 }
 
-pub fn location_contacts() -> Vec<SelectOption> {
+pub fn marital_status_options() -> Vec<SelectOption> {
     vec![
-        SelectOption::from((1, "Location Admin".to_string())),
-        SelectOption::from((2, "Site Manager".to_string())),
+        SelectOption::from((1, "Never Married".to_string())),
+        SelectOption::from((2, "Separated".to_string())),
+        SelectOption::from((3, "Married".to_string())),
+        SelectOption::from((4, "Widowed".to_string())),
     ]
 }
 
@@ -431,26 +433,21 @@ pub fn territory_options() -> Vec<SelectOption> {
     ]
 }
 
-pub fn consult_result_options() -> Vec<SelectOption> {
+pub fn employment_options() -> Vec<SelectOption> {
     vec![
-        SelectOption::from((
-            1,
-            "services rendered. next meeting scheduled".to_string(),
-        )),
-        SelectOption::from((
-            2,
-            "services rendered. no follow up requested".to_string(),
-        )),
+        SelectOption::from((1, "Employed".to_string())),
+        SelectOption::from((2, "Unemployed".to_string())),
+        SelectOption::from((3, "Retired".to_string())),
     ]
 }
 
-pub fn consult_purpose_options() -> Vec<SelectOption> {
+pub fn purpose_options() -> Vec<SelectOption> {
     vec![
-        SelectOption::from((1, "Informational".to_string())),
-        SelectOption::from((2, "Initial Service".to_string())),
-        SelectOption::from((3, "Continued Service".to_string())),
-        SelectOption::from((4, "Final Service".to_string())),
-        SelectOption::from((5, "Audit".to_string())),
+        SelectOption::from((1, "Debt Consolidation".to_string())),
+        SelectOption::from((2, "Medical".to_string())),
+        SelectOption::from((3, "House".to_string())),
+        SelectOption::from((4, "Car".to_string())),
+        SelectOption::from((5, "Other".to_string())),
     ]
 }
 
