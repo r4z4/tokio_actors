@@ -1,13 +1,7 @@
+{% include "form/form_error.html" %}
+
 <h4 class="form_heading">Address</h4>
 <ul>
-  <li>
-    <!-- If invalid, change aria-invalid attribute to "true" -->
-    {% match validation_errors.errors %}
-      {% when Some with (errors) %}
-          <strong>{{errors|json}}</strong>
-      {% when None %}
-    {% endmatch %}
-  </li>
   <li>
   {% match entity %}
       {% when Some with (entity) %}

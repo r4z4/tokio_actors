@@ -40,6 +40,10 @@ input[type="time"]:valid:before {
   content: "";
 } */
 
+#application_form {
+  margin: auto;
+}
+
 /***********
 ** Errors **
 ***********/
@@ -103,7 +107,7 @@ input[type="time"]:valid:before {
 	width: 100%;
 	height: 100px;
 }
-.form-style ul li button {
+.submit_button {
 	-moz-box-shadow: inset 0px 1px 0px 0px #3985B1;
 	-webkit-box-shadow: inset 0px 1px 0px 0px #3985B1;
 	box-shadow: inset 0px 1px 0px 0px #3985B1;
@@ -114,7 +118,7 @@ input[type="time"]:valid:before {
 	color: #FFFFFF;
 	padding: 8px 18px;
 	text-decoration: none;
-	font: 12px Arial, Helvetica, sans-serif;
+	font: 12px Helvetica, sans-serif;
 }
 .form-style ul li button:hover {
 	background: linear-gradient(to bottom, #2D77A2 5%, #337DA8 100%);
@@ -130,20 +134,13 @@ input[type="time"]:valid:before {
   text-align: center;
   margin: auto;
 }
+
 .form_link_container {
+  width: 60%;
+  margin: 2% auto;
   border-radius: 10px;
   padding: 8px 0;
-}
-.form-style span.psw {
-  float: right;
-  padding-right: 15px;
-  line-height: 0.5em; 
-  vertical-align: middle;
-}
-.form-style span.reg {
-  padding-left: 15px;
-  line-height: 0.5em; 
-  vertical-align: middle;
+  text-align: center;
 }
 
   /* Change styles for span on extra small screens */
@@ -170,9 +167,13 @@ input[type="time"]:valid:before {
   width: 100%;
 }
 
+select {
+  margin: 8px 0;
+}
+
 input[type=text], input[type=password], input[type=email], input[type=tel] {
   width: 100%;
-  padding: 16px 8px;
+  padding: 12px 8px;
   border-radius: 5px;
   margin: 8px 0;
   display: inline-block;
@@ -182,6 +183,8 @@ input[type=text], input[type=password], input[type=email], input[type=tel] {
 
 .form-style {
   /* max-width: 450px; */
+  width: 80%;
+  margin: auto;
   background: #FAFAFA;
   padding: 30px;
   margin: 50px auto;
@@ -215,7 +218,7 @@ input[type=text], input[type=password], input[type=email], input[type=tel] {
   font: 12px Arial, Helvetica, sans-serif;
 }
 
-.form-style ul li  .field-style{
+.form-style ul li .field-style{
   box-sizing: border-box; 
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box; 
@@ -266,62 +269,6 @@ input[type=text], input[type=password], input[type=email], input[type=tel] {
 .align-right {
   float: right;
 }
-/*
-Hide the browser's default checkbox
-.container input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
-}
-
-Create a custom checkbox
-.checkmark {
-  position: absolute;
-  border-radius: 5px;
-  border: 2px solid black;
-  left: 0;
-  height: 15px;
-  width: 15px;
-  background-color: #eee;
-}
-
-On mouse-over, add a grey background color
-.container:hover input ~ .checkmark {
-  background-color: #ccc;
-}
-
-When the checkbox is checked, add a blue background
-.container input:checked ~ .checkmark {
-  background-color: #2196F3;
-}
-
-Create the checkmark/indicator (hidden when not checked)
-.checkmark:after {
-  content: "";
-  position: absolute;
-  display: none;
-}
-
-Show the checkmark when checked
-.container input:checked ~ .checkmark:after {
-  display: block;
-}
-
-Style the checkmark/indicator
-.container .checkmark:after {
-  left: 4px;
-  top: 1px;
-  width: 5px;
-  height: 10px;
-  border: solid white;
-  border-width: 0 3px 3px 0;
-  -webkit-transform: rotate(45deg);
-  -ms-transform: rotate(45deg);
-  transform: rotate(45deg);
-}
-*/
 
 input[type="checkbox"] {
   appearance: none;
@@ -352,10 +299,15 @@ form {
   width: 80%;
   margin: auto;
   line-height: 2;
+  & h4, label {
+    color: black;
+  }
 }
 
 .auth fieldset {
   text-align: center;
+  width: 60%;
+  margin: auto;
 }
 
 .auth input {
@@ -424,6 +376,10 @@ nav {
   border-bottom: 1px solid black;
   overflow: hidden;
 }
+
+.right_nav {
+  float: right;
+}
   
 .crumb {
   display: inline-block;
@@ -442,10 +398,9 @@ nav {
 }
 
 .crumbs li a, .dropbtn {
-  display: inline-block;
   color: white;
   text-align: center;
-  padding: 14px 16px;
+  padding: 8px 10px;
   text-decoration: none;
 }
 
@@ -460,7 +415,7 @@ li.dropdown {
 .dropdown-content {
   display: none;
   position: absolute;
-  background-color: #f9f9f9;
+  background-color: #5b535c;
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   z-index: 1;

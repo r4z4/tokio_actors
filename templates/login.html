@@ -73,26 +73,22 @@
     </fieldset>
 
     <div class="auth_submit">
-      <input type="submit" value="Login" />
+      <input class="submit_button" type="submit" value="Login" />
     </div>
 
     {% if let Some(next) = next %}
-    <input type="hidden" name="next" value="{{next}}" />
+      <input type="hidden" name="next" value="{{next}}" />
     {% endif %}
+
   </form>
-  <div class="auth_footer">
-    <div class="form_link_container">
-      <span class="reg">
-          <a href="/register"
-          > No account? Register here
-          </a>
-      </span>
-      <span class="psw">
-          <a href="/forgot-password"
-          > Forgot password?
-          </a>
-      </span>
-    </div>
+
+  <div class="form_link_container" style="background-color: #7b777b">
+    <p>
+      <a href="/register"> No account? Register here</a>
+    </p>
+    <p>
+      <a href="/forgot-password">Forgot password?</a>
+    </p>
   </div>
   {% call super() %}
 {% endblock %}

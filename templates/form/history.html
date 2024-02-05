@@ -2,7 +2,7 @@
 <ul>
     <li>
       <select class="field-style field-split align-left" id="consult_purpose_id" name="consult_purpose_id" value="" >
-          {% for option in purpose_options %}
+          {% for option in homeownership_options %}
             {% if let Some(entity) = entity %}
               {% if option.value == entity.purpose_id %}
                 <option value="{{option.value}}" selected="true">{{option.key}}</option>
@@ -29,57 +29,13 @@
       </select>
     </li>
     <li>
-      <div>
-        <select class="field-style field-full align-none" id="location_id" name="location_id">
-          {% for option in location_options %}
-            {% if let Some(entity) = entity %}
-              {% if option.value == entity.location_id %}
-                <option value="{{option.value}}" selected="true">{{option.key}}</option>
-              {% else %} 
-                <option value="{{option.value}}">{{option.key}}</option>
-              {% endif %}
-            {% else %}
-              <option value="{{option.value}}">{{option.key}}</option>
-            {% endif %}
-          {% endfor %}
-        </select>
-      </div>
-    </li>
-    <li>
-        <select class="field-style field-addr-one" id="client_id" name="client_id">
-          {% for option in homeownership_options %}
-            {% if let Some(entity) = entity %}
-              {% if option.value == entity.homeownership %}
-                <option value="{{option.value}}" selected="true">{{option.key}}</option>
-              {% else %} 
-                <option value="{{option.value}}">{{option.key}}</option>
-              {% endif %}
-            {% else %}
-              <option value="{{option.value}}">{{option.key}}</option>
-            {% endif %}
-          {% endfor %}
-        </select>
-        <input class="field-style field-addr-two" type="number" id="num_attendees" name="num_attendees" value="1" min="1" max="20" />
-    </li>
-    <li>
-      <select 
-        class="field-style field-split align-left" 
-        id="consultant_id" 
-        name="consultant_id"
-      >
-        {% for option in consultant_options %}
-          {% if let Some(entity) = entity %}
-            {% if option.value == entity.consultant_id %}
-              <option value="{{option.value}}" selected="true">{{option.key}}</option>
-            {% else %} 
-              <option value="{{option.value}}">{{option.key}}</option>
-            {% endif %}
-          {% else %}
-            <option value="{{option.value}}">{{option.key}}</option>
-          {% endif %}
-        {% endfor %}
-      </select>
-      <label class="field-split align-right container">Linfa Assign
+    {% match entity %}
+        {% when Some with (entity) %}
+            <input class="field-style field-split align-left" type="number" id="emp_length" name="emp_length" value="{{entity.emp_length}}" min="1" max="40" />
+        {% when None %}
+            <input class="field-style field-split align-left" type="number" id="emp_length" name="emp_length" value="1" min="1" max="40" />
+    {% endmatch %}
+      <label class="field-split align-right container">Joint Application?
         <input 
           type="checkbox" 
           name="linfa_assign" 
@@ -89,12 +45,5 @@
           >
         <span class="checkmark"></span>
       </label>
-    </li>
-
-    <li>
-      <div>
-        <button class="field-style field-split align-left" type="submit">Submit</button>
-        <button class="field-style field-split align-right" type="reset">Clear Form</button>
-      </div>
     </li>
   </ul>

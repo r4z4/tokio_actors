@@ -2,15 +2,9 @@
 
 {% block title %}Users{% endblock %}
 
+{# Only require nav elements on semi-base or base templates #}
 {% block nav %}
-  {% match user %}
-    {% when Some with (val) %}
-    <li class="crumb">{{val.username}}</li>
-    <div><a href="/logout">Logout</a></div>
-    {% when None %}
-    <li class="crumb">No User</li>
-    <div><a href="/login">Login</a></div>
-  {% endmatch %}
+  {% include "nav.html" %}
 {% endblock %}
 
 {% block content %}
@@ -41,7 +35,16 @@
 
     {% include "form/address.html" %}
 
+    {% include "form/loan_info.html" %}
+
     {% include "form/history.html" %}
+
+    <li>
+      <div>
+        <button class="field-style field-split align-left submit_button" type="reset">Clear Form</button>
+        <button class="field-style field-split align-right submit_button" type="submit">Submit</button>
+      </div>
+    </li>
 
     </form>
   </div>

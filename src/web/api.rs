@@ -29,7 +29,7 @@ mod post {
     use serde::Deserialize;
     use tokio::{spawn, sync::{broadcast, mpsc}, time::sleep};
 
-    use crate::{actors::actor::{aggregate_offers, get_mock_offers, mock_offer, ActorHandle, ActorMessage, LoopInstructions}, controllers::offer_controller::OffersTemplate, models::{credit_file::mock_credit_file, loan::mock_loan, offer::Offer}, web::app::Application};
+    use crate::{actors::actor::{aggregate_offers, mock_offer}, controllers::offer_controller::OffersTemplate};
 
     use super::*;
 
@@ -80,7 +80,7 @@ mod get {
     use serde::Deserialize;
     use tokio::{spawn, sync::{broadcast, mpsc}, time::sleep};
 
-    use crate::{actors::actor::{aggregate_offers, get_mock_offers, mock_offer, ActorHandle, ActorMessage, LoopInstructions}, controllers::offer_controller::OffersTemplate, models::{credit_file::mock_credit_file, loan::mock_loan, offer::Offer}, web::app::Application};
+    use crate::models::application::Application;
 
     use super::*;
 

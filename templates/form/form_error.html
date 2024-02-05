@@ -1,0 +1,8 @@
+<div>
+    <!-- If invalid, change aria-invalid attribute to "true" -->
+    {% match validation_errors.errors %}
+      {% when Some with (errors) %}
+          <strong>{{errors|json}}</strong>
+      {% when None %}
+    {% endmatch %}
+</div>

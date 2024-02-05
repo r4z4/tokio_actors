@@ -3,13 +3,7 @@
 {% block title %}About Us{% endblock %}
 
 {% block nav %}
-  {% if let Some(user) = user %}
-    <li class="crumb">{{user.username}}</li>
-    <div><a href="/logout">Logout</a></div>
-  {% else %}
-    <li class="crumb">No User</li>
-    <div><a href="/login">Login</a></div>
-  {% endif %}
+  {% include "nav.html" %}
 {% endblock %}
 
 {% block content %}

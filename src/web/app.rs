@@ -21,7 +21,7 @@ use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::{broadcast, mpsc, oneshot}, io::{AsyncRead, AsyncWrite}};
-use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{employment_options, marital_status_options, purpose_options, FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, application::ApplicationTemplate, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{api, auth, protected, public, ws::read_and_send_messages}};
+use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{employment_options, get_state_options, marital_status_options, purpose_options, FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, application::ApplicationTemplate, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{api, auth, protected, public, ws::read_and_send_messages}};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use sqlx::FromRow;
 use sqlx::types::time::Date;
@@ -107,6 +107,9 @@ impl App {
         // println!("Serve");
         // let cors = CorsLayer::new().allow_origin(Any);
 
+        // Get them right away here FIXME: Redis cache
+        // populate_cache()
+
         let cors = CorsLayer::new()
             .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
             .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
@@ -170,7 +173,6 @@ impl App {
         // println!("Sending message - {}", subscribe_msg);
         // write.send(subscribe_msg).await.expect("Failed to send message");
         // let _ = tokio::try_join!(read_handle);
-
         let actor_handle = ActorHandle::new();
         let msg = ActorMessage::RegularMessage { text: "Hey from Main".to_owned() };
         let _ = actor_handle.sender.send(msg).await;
@@ -374,6 +376,8 @@ async fn get_application(
         AppError::InternalServerError
     });
 
+    let state_options = get_state_options(&pool).await;
+
     let current_user = 
         match auth_session.user {
             Some(user) => Some(CurrentUser {username: user.username, email: user.email}),
@@ -382,7 +386,7 @@ async fn get_application(
 
     match users {
         // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
-        Ok(users) => ApplicationTemplate::new(current_user).into_response(),
+        Ok(users) => ApplicationTemplate::example(current_user, state_options).into_response(),
         Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
     }
 }

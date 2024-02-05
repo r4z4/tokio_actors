@@ -195,7 +195,16 @@ impl FromRedisValue for SelectOption {
 #[derive(Debug, Validate, Serialize, FromRow, Clone, Deserialize)]
 pub struct StringSelectOption {
     pub value: String,
-    pub key: Option<String>,
+    pub key: String,
+}
+
+impl StringSelectOption {
+    fn new<S>(value: S, key: S) -> StringSelectOption where S: Into<String> {
+        StringSelectOption { 
+            value: value.into(),
+            key: key.into() 
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -284,17 +293,17 @@ pub async fn get_state_options(pool: &Pool<Postgres>) -> Vec<StringSelectOption>
     {
         Ok(state_list) => state_list
             .iter()
-            .map(|state| StringSelectOption {
-                key: Some(state.state_name.to_owned()),
-                value: state.state_name.to_owned(),
-            })
+            .map(|state| StringSelectOption::new(
+                &state.state_name,
+                &state.state_name,
+            ))
             .collect::<Vec<StringSelectOption>>(),
         Err(err) => {
             dbg!(&err);
-            vec![StringSelectOption {
-                key: Some("Select One".to_string()),
-                value: "Select One".to_string(),
-            }]
+            vec![StringSelectOption::new(
+                "Select One",
+                "Select One",
+            )]
         }
     }
 }
@@ -402,6 +411,15 @@ pub fn marital_status_options() -> Vec<SelectOption> {
         SelectOption::from((2, "Separated".to_string())),
         SelectOption::from((3, "Married".to_string())),
         SelectOption::from((4, "Widowed".to_string())),
+    ]
+}
+
+pub fn homeownership_options() -> Vec<SelectOption> {
+    vec![
+        SelectOption::from((1, "Own".to_string())),
+        SelectOption::from((2, "Mortgage".to_string())),
+        SelectOption::from((3, "Rent".to_string())),
+        SelectOption::from((4, "None".to_string())),
     ]
 }
 
