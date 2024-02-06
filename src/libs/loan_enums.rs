@@ -85,8 +85,8 @@ impl std::str::FromStr for ApplicationType {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "Current" => Ok(ApplicationType::Individual),
-            "Fully Paid" => Ok(ApplicationType::Joint),
+            "Individual" => Ok(ApplicationType::Individual),
+            "Joint" => Ok(ApplicationType::Joint),
             _ => Err("Invalid ApplicationType value"),
         }
     }
@@ -95,10 +95,11 @@ impl std::str::FromStr for ApplicationType {
 impl std::str::FromStr for InitialListingStatus {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        dbg!(s);
         match s {
             "whole" => Ok(InitialListingStatus::Whole),
             "fractional" => Ok(InitialListingStatus::Fractional),
-            _ => Err("Invalid InitialListingStatus value"),
+            e => Err("Invalid InitialListingStatus value {e}"),
         }
     }
 }
@@ -142,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_convert_disbursement_method() {
-        const TEST_STR: &str = "Direct Pay";
+        const TEST_STR: &str = "DirectPay";
         let converted_str = convert_disbursement_method(TEST_STR).unwrap();
         assert_eq!(converted_str, DisbursementMethod::DirectPay);
     }
@@ -156,7 +157,7 @@ mod tests {
 
     #[test]
     fn test_convert_initial_listing_status() {
-        const TEST_STR: &str = "Fractional";
+        const TEST_STR: &str = "fractional";
         let converted_str = convert_initial_listing_status(TEST_STR).unwrap();
         assert_eq!(converted_str, InitialListingStatus::Fractional);
     }

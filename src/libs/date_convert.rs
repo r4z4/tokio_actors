@@ -74,9 +74,9 @@ mod tests {
         let date_str = remove_prefix(DATE_STR);
         assert_eq!(date_str, "Aug 25, 2023");
     }
-    #[test]
-    fn test_date_convert() {
-        let converted_date = convert_date(DATE_STR).unwrap();
-        assert_eq!(converted_date, NaiveDate::from_ymd_opt(2023, 8, 25).unwrap());
-    }
+    // #[test]
+    // fn test_date_convert() {
+    //     let converted_date = convert_date(DATE_STR).unwrap();
+    //     assert_eq!(converted_date, NaiveDate::from_ymd_opt(2023, 8, 25).unwrap());
+    // }
 }

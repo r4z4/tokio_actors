@@ -255,7 +255,6 @@ impl App {
             .merge(api::router())
             .route("/actor", get(get_actor))
             .route("/users", get(get_users))
-            .route("/application", get(get_application))
             .route("/offers", get(get_offers))
             .route("/ticker", get(get_ticker))
             .route_layer(login_required!(Backend, login_url = "/login"))
@@ -351,42 +350,6 @@ async fn get_users(
     match users {
         // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
         Ok(users) => UsersTemplate {users: &users, message: None, user: current_user}.into_response(),
-        Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
-    }
-}
-
-#[debug_handler]
-async fn get_application(
-    State(state): State<Arc<Mutex<SharedState>>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    Query(params): Query<HashMap<String,String>>,
-    auth_session: AuthSession,
-    Extension(pool): Extension<PgPool>,
-) -> Response {
-    // let msg = ActorMessage::RegularMessage { text: "Hey from get_users()".to_owned() };
-    // let _ = state.lock().unwrap().actor_handle.sender.send(msg).await;
-
-    let users = sqlx::query_as::<_, models::auth::User>(
-        "SELECT user_id, email, username, created_at, updated_at FROM users;"
-    )
-    .fetch_all(&pool)
-    .await
-    .map_err(|err| {
-        dbg!(err);
-        AppError::InternalServerError
-    });
-
-    let state_options = get_state_options(&pool).await;
-
-    let current_user = 
-        match auth_session.user {
-            Some(user) => Some(CurrentUser {username: user.username, email: user.email}),
-            _ => None,
-        };
-
-    match users {
-        // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
-        Ok(users) => ApplicationTemplate::example(current_user, state_options).into_response(),
         Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
     }
 }

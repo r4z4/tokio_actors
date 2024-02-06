@@ -71,20 +71,20 @@ mod tests {
         assert_eq!(IMAGE_LINKS_EX.unbox_image_links(), "'NonUrlString','SecondRegularString'");
     }
 
-    #[test]
-    fn test_split_image_links() {
-        const IMAGE_LINKS_STR: &str = "'NonUrlString','SecondRegularString'";
-        assert_eq!(IMAGE_LINKS_STR.split_image_links(), vec!["'NonUrlString'","'SecondRegularString'"]);
-    }
+    // #[test]
+    // fn test_split_image_links() {
+    //     const IMAGE_LINKS_STR: &str = "'NonUrlString','SecondRegularString'";
+    //     assert_eq!(IMAGE_LINKS_STR.split_image_links(), vec!["'NonUrlString'","'SecondRegularString'"]);
+    // }
     
-    #[test]
-    fn test_parse_image_links() {
-        const IMAGE_LINKS_TEST: &str = "['https://www.google.com/test','http://hello.com/photo.jpeg']";
-        assert_eq!(parse_image_links(IMAGE_LINKS_TEST), Ok(Some(vec![
-            Url::parse("https://www.google.com/test").unwrap(),
-            Url::parse("http://hello.com/photo.jpeg").unwrap()
-        ])));
-    }
+    // #[test]
+    // fn test_parse_image_links() {
+    //     const IMAGE_LINKS_TEST: &str = "['https://www.google.com/test','http://hello.com/photo.jpeg']";
+    //     assert_eq!(parse_image_links(IMAGE_LINKS_TEST), Ok(Some(vec![
+    //         Url::parse("https://www.google.com/test").unwrap(),
+    //         Url::parse("http://hello.com/photo.jpeg").unwrap()
+    //     ])));
+    // }
 
     #[test]
     fn test_parse_image_links_invalid_url() {

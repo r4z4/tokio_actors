@@ -1,7 +1,7 @@
 <h4 class="form_heading">History</h4>
 <ul>
     <li>
-      <select class="field-style field-split align-left" id="consult_purpose_id" name="consult_purpose_id" value="" >
+      <select class="field-style field-split align-left" id="homeownership" name="homeownership" value="" >
           {% for option in homeownership_options %}
             {% if let Some(entity) = entity %}
               {% if option.value == entity.purpose_id %}
@@ -14,7 +14,7 @@
             {% endif %}
           {% endfor %}
       </select>
-      <select class="field-style field-split align-right" id="consult_result_id" name="consult_result_id" value="" >
+      <select class="field-style field-split align-right" id="employment_status" name="employment_status" value="" >
           {% for option in employment_options %}
             {% if let Some(entity) = entity %}
               {% if option.value == entity.employment_status %}
