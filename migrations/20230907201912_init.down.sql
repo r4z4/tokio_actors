@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS territories;
 DROP TABLE IF EXISTS specialties;
 DROP TABLE IF EXISTS mime_types;
 DROP TABLE IF EXISTS entities; 
+DROP TABLE IF EXISTS loan_purpose;
 DROP TABLE IF EXISTS contact_submissions;
 DROP TABLE IF EXISTS article_submissions;
 DROP TABLE IF EXISTS states; 

@@ -1,6 +1,7 @@
 -- Add up migration script here
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 --DROP TABLE IF EXISTS accounts;
 DROP TYPE IF EXISTS user_type;
 DROP TYPE IF EXISTS specialty;
@@ -147,6 +148,11 @@ CREATE TABLE IF NOT EXISTS entities (
         entity_name TEXT NOT NULL
     );
 
+CREATE TABLE IF NOT EXISTS loan_purpose (
+        loan_purpose_id SERIAL PRIMARY KEY,
+        loan_purpose_name TEXT NOT NULL
+    );
+
 CREATE TABLE IF NOT EXISTS mime_types (
         mime_type_id SERIAL PRIMARY KEY,
         mime_type_name TEXT NOT NULL
@@ -208,12 +214,32 @@ CREATE TABLE IF NOT EXISTS applications (
         application_id SERIAL PRIMARY KEY,
         application_slug TEXT NOT NULL DEFAULT (uuid_generate_v4()),
         location_id INTEGER NOT NULL,
-        user_id INTEGER NOT NULL,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        -- user_id INTEGER NOT NULL,
+        address_one TEXT NOT NULL, 
+        address_two TEXT NULL, 
+        city TEXT NOT NULL, 
+        state CHAR(2), 
+        zip CHAR(5), 
+        phone CHAR(14), 
+        ssn_nacl TEXT NOT NULL, 
+        dob DATE NULL,
+        annual_income INTEGER NOT NULL,
+        marital_status INTEGER NOT NULL, 
+        desired_loan_amount INTEGER NOT NULL, 
+        loan_purpose INTEGER NOT NULL, 
+        homeownership INTEGER NOT NULL, 
+        employment_status INTEGER NOT NULL, 
+        emp_length INTEGER NOT NULL, 
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NULL,
-        CONSTRAINT fk_user
-            FOREIGN KEY(user_id) 
-	            REFERENCES users(user_id),
+        -- CONSTRAINT fk_user
+        --     FOREIGN KEY(user_id) 
+	    --         REFERENCES users(user_id),
+        CONSTRAINT fk_loan_purpose
+            FOREIGN KEY(loan_purpose) 
+	            REFERENCES loan_purpose(loan_purpose_id),
         CONSTRAINT fk_location
             FOREIGN KEY(location_id) 
 	            REFERENCES locations(location_id)
@@ -249,6 +275,7 @@ CREATE TABLE IF NOT EXISTS offers (
         CONSTRAINT fk_services
             FOREIGN KEY(servicer_id) 
 	            REFERENCES servicers(servicer_id)
+        -- FIXME: Index
     );
 
 CREATE TABLE IF NOT EXISTS borrowers (
@@ -309,6 +336,7 @@ CREATE TABLE IF NOT EXISTS credit_file (
         CONSTRAINT fk_borrower
             FOREIGN KEY(borrower_id) 
                 REFERENCES borrowers(borrower_id)
+        -- FIXME: Index
     );
 
 CREATE TABLE IF NOT EXISTS loans (
@@ -412,6 +440,15 @@ VALUES
 (6, 'consult'),
 (7, 'client'),
 (8, 'query');
+
+INSERT INTO loan_purpose (loan_purpose_id, loan_purpose_name)
+VALUES
+(1, 'debt_consolidation'),
+(2, 'medical'),
+(3, 'house'),
+(4, 'car'),
+(5, 'education'),
+(6, 'other');
 
 INSERT INTO article_categories (category_id, category_name)
 VALUES
@@ -556,10 +593,10 @@ VALUES
 ('https://upload.wikimedia.org/wikipedia/commons/0/01/Do_%281%29.mp3',                      7,  2, 'Upload', 'MP3 Audio(Mpeg)', '2023-10-12 13:15:55-06'),
 ('/media/cities.csv',                                                                       14, 2, 'Upload', 'CSV File #1',     '2023-11-12 13:15:55-06');
 
-INSERT INTO applications (location_id, user_id) 
+INSERT INTO applications (application_slug, location_id, first_name, last_name, address_one, address_two, city, state, zip, annual_income, phone, dob, desired_loan_amount, loan_purpose, marital_status, ssn_nacl, homeownership, employment_status, emp_length) 
 VALUES 
-(1, 3),
-(2, 2);
+('1dff7c61-98ed-486a-9bc1-0f323268199d', 1, 'Tim', 'Jones','7724 Pine Cir', NULL, 'Omaha', 'NE', 68124, 75000,'555-555-5555', '1987-01-01', 65000, 2, 1, DIGEST('000000000', 'sha256'), 1, 1, 5),
+('522a3933-7d69-4b38-8840-1ae10945094b', 1, 'Steve', 'Louise','4483 South 87th', NULL, 'Northfield', 'MN', 68124, 88000, '555-555-5555', '1976-01-01', 65000, 2, 1, DIGEST('000000000', 'sha256'), 1, 1, 5);
 
 INSERT INTO servicers (servicer_name, contact_name, contact_phone) 
 VALUES 
@@ -584,7 +621,7 @@ VALUES
 INSERT INTO offers (servicer_id, application_id, max_amount, min_amount, terms, apr, percent_fee, expires) 
 VALUES 
 (1, 1, 15000, 5000, 36, 12.99, 3.2, DATE(NOW() + INTERVAL '4 week')),
-(2, 2, 15000, 5000, 36, 15.99, 2.2, DATE(NOW() + INTERVAL '2 week'));
+(2, 2, 17000, 5000, 36, 15.99, 2.2, DATE(NOW() + INTERVAL '2 week'));
 
 INSERT INTO credit_file (borrower_id, emp_title, emp_length, state, homeownership, annual_income, verified_income,debt_to_income,annual_income_joint, verification_income_joint, debt_to_income_joint,
         delinq_2y, months_since_last_delinq, earliest_credit_line, inquiries_last_12m, total_credit_lines, open_credit_lines, total_credit_limit, total_credit_utilized, 

@@ -101,6 +101,12 @@ pub struct CurrentUser {
     pub email: String,
 }
 
+impl CurrentUser {
+    pub fn new<S>(username: S, email: S) -> CurrentUser where S: Into<String> {
+        CurrentUser { username: username.into(), email: email.into() }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Default, Clone, FromRow)]
 pub struct CurrentUserOpt {
     pub current_user: Option<CurrentUser>,

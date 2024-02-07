@@ -1,0 +1,21 @@
+<div class="validation_div">
+    <h4>Please correct the following validation errors.</h4>
+    {% match form_response.errors %}
+        {% when Some with (errors) %}
+            {% for error in errors %}
+            <div class="error_div">
+            <h5>{{error.key}}</h5>
+                <div>
+                    {% for err in error.errs %}
+                        {% match err.message %}
+                            {% when Some with (msg) %}
+                                <p>{{msg}}</p>
+                            {% when None %}
+                        {% endmatch %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% when None %}
+    {% endmatch %}
+</div>

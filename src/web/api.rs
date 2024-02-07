@@ -23,19 +23,25 @@ pub fn router() -> Router<Arc<Mutex<SharedState>>> {
 mod post {
     use std::{collections::HashMap, convert::Infallible, time::Duration};
 
-    use axum::{extract::State, response::Redirect, Extension, Form};
+    use axum::{extract::State, http::HeaderMap, response::Redirect, Extension, Form};
     use chrono::NaiveDate;
     use futures_util::{stream, Stream, StreamExt};
     use rand::{distributions::Alphanumeric, Rng};
     use serde::Deserialize;
+    use serde_json::json;
+    use sqlx::{types::Uuid, FromRow, PgPool};
     use tokio::{spawn, sync::{broadcast, mpsc}, time::sleep};
+    use validator::Validate;
 
-    use crate::{actors::actor::{aggregate_offers, mock_offer}, controllers::offer_controller::OffersTemplate};
+    use crate::{actors::actor::{aggregate_offers, mock_offer}, config::{get_validation_response, FormErrorResponse, UserAlert}, controllers::offer_controller::OffersTemplate};
 
     use super::*;
 
-    #[derive(Debug, Deserialize)]
+    #[derive(Debug, Deserialize, Validate)]
     pub struct ApplicationInput {
+        pub location_id: i32,
+        pub first_name: String,
+        pub last_name: String,
         pub address_one: String,
         pub address_two: String,
         pub city: String,
@@ -44,28 +50,133 @@ mod post {
         pub phone: String,
         pub ssn: String,
         pub dob: String,
+        pub annual_income: i32,
         pub marital_status: i32,
         pub desired_loan_amount: i32,
-        pub purpose: i32,
+        pub loan_purpose: i32,
         pub homeownership: i32,
         pub employment_status: i32,
         pub emp_length: i32
+    }
+    
+    #[derive(Debug, Deserialize, FromRow)]
+    pub struct ApplicationPostResponse {
+        pub application_id: i32,
+    }
+
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    #[derive(Hash)]
+    struct SsnToNacl {
+        ssn: i32,
+    }
+    fn hash<T>(obj: T) -> u64
+    where
+        T: Hash,
+    {
+        let mut hasher = DefaultHasher::new();
+        obj.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    #[derive(Debug, Template)]
+    #[template(path = "form/form-validation.html")]
+    struct FormValidationTemplate {
+        form_response: FormErrorResponse
     }
 
     #[debug_handler]
     pub async fn apply(
         mut auth_session: AuthSession,
         State(state): State<Arc<Mutex<SharedState>>>,
+        Extension(pool): Extension<PgPool>,
         Form(application): Form<ApplicationInput>,
     ) -> impl IntoResponse {
         match auth_session.user {
             Some(user) => {
-                let current_user = CurrentUser {username: user.username.clone(), email: user.email};
+                let current_user = CurrentUser::new(&user.username, &user.email);
                 let offers = aggregate_offers(1);
                 let lc_offer = mock_offer(1);
                 let lc_offers = vec![lc_offer];
-                dbg!(application);
-                OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
+                dbg!(&application);
+                let is_valid = application.validate();
+                if is_valid.is_err() {
+                    let validation_response = get_validation_response(is_valid);
+                    let mut headers = HeaderMap::new();
+                    headers.insert("HX-Retarget", "#application_errors".parse().unwrap());
+                    // let body = hb
+                    //     .render("forms/form-validation", &validation_response)
+                    //     .unwrap();
+                    // return HttpResponse::BadRequest()
+                    //     .header("HX-Retarget", "#location_errors")
+                    //     .body(body);
+                    return (StatusCode::INTERNAL_SERVER_ERROR, headers, FormValidationTemplate { form_response: validation_response }).into_response()
+                } else {
+                    let ssn_str = application.ssn.replace("-", "");
+                    let dob = NaiveDate::parse_from_str(&application.dob, "%Y-%m-%d").unwrap();
+                    dbg!(&dob);
+                    // let ssn = ssn_str.parse::<i32>().unwrap();
+                    // let ssn_to_nacl = SsnToNacl { ssn: ssn };
+                    // let mut hasher = DefaultHasher::new();
+                    // ssn_to_nacl.hash(&mut hasher);
+                    // let ssn_nacl = hasher.finish();
+                    // println!("{:?}", &ssn_nacl);
+                    let app_slug = Uuid::new_v4().simple().to_string();
+                    match sqlx::query_as::<_, ApplicationPostResponse>(
+                        "INSERT INTO applications (application_slug, location_id, first_name, last_name, address_one, address_two, city, state, zip, phone, ssn_nacl, dob, marital_status, desired_loan_amount, loan_purpose, annual_income, homeownership, employment_status, emp_length) 
+                                VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), $7, $8, $9, NULLIF($10, ''), DIGEST($11, 'sha256'), NULLIF($12, '1900-01-01'), $13, $14, $15, $16, $17, $18, $19) RETURNING application_id",
+                    )
+                    .bind(app_slug)
+                    .bind(&application.location_id)
+                    .bind(&application.first_name)
+                    .bind(&application.last_name)
+                    .bind(&application.address_one)
+                    .bind(&application.address_two)
+                    .bind(&application.city)
+                    .bind(&application.state)
+                    .bind(&application.zip)
+                    .bind(&application.phone)
+                    .bind(ssn_str)
+                    .bind(dob)
+                    .bind(&application.marital_status)
+                    .bind(&application.desired_loan_amount)
+                    .bind(&application.loan_purpose)
+                    .bind(&application.annual_income)
+                    .bind(&application.homeownership)
+                    .bind(&application.employment_status)
+                    .bind(&application.emp_length)
+                    .fetch_one(&pool)
+                    .await
+                    {
+                        Ok(app) => {
+                            dbg!(app.application_id);
+                            // Del / Invalidate Redis Key to force a DB fetch
+                            // let mut con = r_state.r_pool.get().await.unwrap();
+                            // let key = format!("{}:{}", "query", "location_options");
+                            // let deleted: RedisResult<bool> = con.del(&key).await;
+                            // match deleted {
+                            //     Ok(bool) => {
+                            //         println!("Key:{} -> {}", &key, {if bool {"Found & Deleted"} else {"Not Found"}});
+                            //     },
+                            //     Err(err) => println!("Error: {}", err)
+                            // }
+                            let user_alert = UserAlert::from((format!("Location added successfully: ID #{:?}", app.application_id).as_str(), "alert_success"));
+                            let template_data = json!({
+                                "user_alert": user_alert,
+                                "user": user,
+                            });
+
+                            return OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
+                        }
+                        Err(err) => {
+                            dbg!(&err);
+                            let user_alert = UserAlert::from((format!("Error adding location: {:?}", err).as_str(), "alert_error"));
+                            return StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                        }
+                    }
+                }
+                // OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
             }
 
             None => StatusCode::INTERNAL_SERVER_ERROR.into_response(),

@@ -3,6 +3,16 @@
 <h4 class="form_heading">Address</h4>
 <ul>
   <li>
+    {% match entity %}
+        {% when Some with (entity) %}
+            <input type="text" id="first_name" name="first_name" class="field-style field-split align-left" placeholder="First Name" maxlength="40" value="{{entity.first_name}}" required="true" />
+            <input type="text" id="last_name" name="last_name" class="field-style field-split align-right" placeholder="Last Name" maxlength="40" value="{{entity.last_name}}" required="true" />
+        {% when None %}
+            <input type="text" id="first_name" name="first_name" class="field-style field-split align-left" placeholder="First Name" maxlength="40" value="" required="true" />
+            <input type="text" id="last_name" name="last_name" class="field-style field-split align-right" placeholder="Last Name" maxlength="10" value="" required="true" />
+    {% endmatch %}
+    </li>
+  <li>
   {% match entity %}
       {% when Some with (entity) %}
           <input type="text" id="address_one" name="address_one" class="field-style field-addr-one" placeholder="Address" value="{{entity.address_one}}" required="true" />
