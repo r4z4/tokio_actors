@@ -86,6 +86,12 @@ mod post {
         form_response: FormErrorResponse
     }
 
+    #[derive(Debug, Template)]
+    #[template(path = "apply_offers.html")]
+    struct ApplyOffersTemplate<'a> {
+        pub message: &'a str
+    }
+
     #[debug_handler]
     pub async fn apply(
         mut auth_session: AuthSession,
@@ -98,7 +104,7 @@ mod post {
                 let current_user = CurrentUser::new(&user.username, &user.email);
                 let offers = aggregate_offers(1);
                 let lc_offer = mock_offer(1);
-                let lc_offers = vec![lc_offer];
+                let lc_offers = vec![&lc_offer];
                 dbg!(&application);
                 let is_valid = application.validate();
                 if is_valid.is_err() {
@@ -167,7 +173,15 @@ mod post {
                                 "user": user,
                             });
 
-                            return OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
+                            // return OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
+                            let _ = tokio::spawn(async move {  
+                                sleep(Duration::from_millis(5000)).await;
+                                // Find comp record in credit file CSV and use that to decision on
+                                // Get Id form that, then look at load CSV with that ID and see if in good shape.
+                                // If so, give offer. If not, decline.
+                                state.lock().unwrap().offer_tx.clone().unwrap().send(lc_offer);
+                            });
+                            return (StatusCode::CREATED, ApplyOffersTemplate { message: "Hey" }).into_response()
                         }
                         Err(err) => {
                             dbg!(&err);

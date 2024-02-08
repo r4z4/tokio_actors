@@ -49,5 +49,17 @@
     </form>
   </div>
 </div>
+
+<div hx-sse="connect:/sse">
+  <div hx-sse="swap:new_offer">
+    Data specific to new_offer to be swapped
+  </div>
+  <div hx-sse="swap:message">
+    Just any old normal data to be swapped
+  </div>
+  <div hx-sse="swap:new_event">
+    Data specific to new_event to be swapped
+  </div>
+</div>
   {% call super() %}
 {% endblock %}

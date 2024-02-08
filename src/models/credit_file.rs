@@ -1,11 +1,12 @@
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use struct_iterable::Iterable;
 use validator::Validate;
 
 use crate::libs::credit_file_enums::{deserialize_homeownership, deserialize_income_verification, deserialize_na_col};
 
-#[derive(Debug, Validate, Serialize, Clone, FromRow, Deserialize)]
+#[derive(Debug, Validate, Serialize, Clone, FromRow, Deserialize, PartialEq, Iterable)]
 pub struct CreditFile {
     pub borrower_id: i32,
     pub emp_title: Option<String>,
@@ -53,6 +54,56 @@ pub struct CreditFile {
     // #[serde(rename = "num_historical_failed_to_pay")]
     pub tax_liens: i32,
     pub public_record_bankrupt: i32,
+}
+
+impl CreditFile {
+    fn hamming_distance(&self, other: &Self) -> usize {
+        if other == self {
+            // They all match
+            other.iter().count()
+        } else {
+            let mut count = 0;
+            
+            if self.borrower_id == other.borrower_id {count += 1} else {};
+            if self.emp_title == other.emp_title {count += 1} else {};
+            if self.emp_length == other.emp_length {count += 1} else {};
+            if self.state == other.state {count += 1} else {};
+            if self.homeownership == other.homeownership {count += 1} else {};
+            if self.annual_income == other.borrower_id {count += 1} else {};
+            if self.verification_income_joint == other.verification_income_joint {count += 1} else {};
+            if self.debt_to_income == other.debt_to_income {count += 1} else {};
+            if self.delinq_2y == other.delinq_2y {count += 1} else {};
+            if self.months_since_last_delinq == other.months_since_last_delinq {count += 1} else {};
+            if self.earliest_credit_line == other.earliest_credit_line {count += 1} else {};
+            if self.inquiries_last_12m == other.inquiries_last_12m {count += 1} else {};
+            if self.total_credit_lines == other.total_credit_lines {count += 1} else {};
+            if self.open_credit_lines == other.open_credit_lines {count += 1} else {};
+            if self.total_credit_limit == other.total_credit_limit {count += 1} else {};
+            if self.total_credit_utilized == other.total_credit_utilized {count += 1} else {};
+            if self.num_collections_last_12m == other.num_collections_last_12m {count += 1} else {};
+            if self.num_historical_failed_to_pay == other.num_historical_failed_to_pay {count += 1} else {};
+            if self.months_since_90d_late == other.months_since_90d_late {count += 1} else {};
+            if self.current_accounts_delinq == other.current_accounts_delinq {count += 1} else {};
+            if self.total_collection_amount_ever == other.total_collection_amount_ever {count += 1} else {};
+            if self.current_installment_accounts == other.current_installment_accounts {count += 1} else {};
+            if self.accounts_opened_24m == other.accounts_opened_24m {count += 1} else {};
+            if self.months_since_last_credit_inquiry == other.months_since_last_credit_inquiry {count += 1} else {};
+            if self.num_satisfactory_accounts == other.num_satisfactory_accounts {count += 1} else {};
+            if self.num_accounts_120d_past_due == other.num_accounts_120d_past_due {count += 1} else {};
+            if self.num_accounts_30d_past_due == other.num_accounts_30d_past_due {count += 1} else {};
+            if self.num_active_debit_accounts == other.num_active_debit_accounts {count += 1} else {};
+            if self.total_debit_limit == other.total_debit_limit {count += 1} else {};
+            if self.num_total_cc_accounts == other.num_total_cc_accounts {count += 1} else {};
+            if self.num_open_cc_accounts == other.num_open_cc_accounts {count += 1} else {};
+            if self.num_cc_carrying_balance == other.num_cc_carrying_balance {count += 1} else {};
+            if self.num_mort_accounts == other.num_mort_accounts {count += 1} else {};
+            if self.account_never_delinq_percent == other.account_never_delinq_percent {count += 1} else {};
+            if self.tax_liens == other.tax_liens {count += 1} else {};
+            if self.public_record_bankrupt == other.public_record_bankrupt {count += 1} else {};
+
+            count
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -123,4 +174,31 @@ pub fn mock_credit_file() -> CreditFile {
         tax_liens: 0,
         public_record_bankrupt: 0,
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn equal_records_returns_len() {
+        let cf = mock_credit_file();
+        let cf2 = cf.clone();
+        let len = cf.iter().count();
+        let dist = cf.hamming_distance(&cf2);
+        assert_eq!(dist, len);
+    }
+    // This should almost always pass FIXME
+    #[test]
+    fn diff_records_returns_less_than_len() {
+        let cf = mock_credit_file();
+        let cf2 = mock_credit_file();
+        let len = cf.iter().count();
+        let dist = cf.hamming_distance(&cf2);
+        assert!(dist < len);
+    }
+    // #[test]
+    // fn test_date_convert() {
+    //     let converted_date = convert_date(DATE_STR).unwrap();
+    //     assert_eq!(converted_date, NaiveDate::from_ymd_opt(2023, 8, 25).unwrap());
+    // }
 }

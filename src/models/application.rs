@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use validator::Validate;
 
-use crate::config::{employment_options, get_state_options, homeownership_options, marital_status_options, purpose_options, FormErrorResponse, SelectOption, StringSelectOption};
+use crate::config::{default_state_opts, employment_options, get_state_options, homeownership_options, marital_status_options, purpose_options, FormErrorResponse, SelectOption, StringSelectOption};
 
 use super::auth::CurrentUser;
 
@@ -30,9 +30,9 @@ pub struct Application<'a> {
     pub dob: &'a str,
 }
 
-impl Application<'_> {
-    pub fn default() -> Self {
-        Application {
+impl Default for Application<'_> {
+    fn default() -> Self {
+        Self {
             consultant_id:1, 
             desired_loan_amount: 56000, 
             employment_status:1,
@@ -74,7 +74,7 @@ pub struct ApplicationTemplate<'a> {
 }
 
 impl ApplicationTemplate<'_> {
-    pub fn default(user: Option<CurrentUser>, state_opts: Vec<StringSelectOption>) -> Self {
+    pub fn custom_default(user: Option<CurrentUser>, state_opts: Vec<StringSelectOption>) -> Self {
         ApplicationTemplate {
             user: user,
             message:None,
@@ -104,6 +104,26 @@ impl ApplicationTemplate<'_> {
             entity: Some(app), 
             validation_errors: FormErrorResponse { errors: None }, 
             state_options: state_opts, 
+            contact_options: employment_options()
+        }
+    }
+}
+
+impl Default for ApplicationTemplate<'_> {
+    fn default() -> Self {
+        // let id = thread_rng().gen_range(0..999999);
+        Self {
+            user: None,
+            message:None,
+            consultant_options: employment_options(),
+            location_options: employment_options(),
+            marital_options: marital_status_options(), 
+            employment_options: employment_options(),
+            purpose_options: purpose_options(),
+            homeownership_options: homeownership_options(), 
+            entity: None, 
+            validation_errors: FormErrorResponse { errors: None }, 
+            state_options: default_state_opts(), 
             contact_options: employment_options()
         }
     }

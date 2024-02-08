@@ -430,6 +430,13 @@ pub fn admin_user_options() -> Vec<SelectOption> {
     ]
 }
 
+pub fn default_state_opts() -> Vec<StringSelectOption> {
+    vec![
+        StringSelectOption::new("NE", "NE"),
+        StringSelectOption::new("MN", "MN"),
+    ]
+}
+
 pub fn user_type_options() -> Vec<SelectOption> {
     vec![
         SelectOption::from((1, "admin".to_string())),
