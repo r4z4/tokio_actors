@@ -2,12 +2,14 @@ use std::collections::HashMap;
 use std::fmt;
 use std::{fs::File, io::Write};
 use chrono::{Utc, NaiveDate, Datelike};
+use csv::Reader;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio::time::{sleep, Duration};
 
+use crate::models::credit_file::CreditFile;
 use crate::models::offer::Offer;
 
 pub struct Actor {
@@ -54,6 +56,10 @@ pub enum ActorMessage {
     RegularMessage {
         text: String,
         // respond_to: Option<mpsc::Sender<ActorMessage>>,
+    },
+    PopulateDB {
+        text: String,
+        respond_to: Option<oneshot::Sender<ActorMessage>>,
     }
 }
 
@@ -190,7 +196,23 @@ impl Actor {
                 // let msg = ActorMessage::RegularMessage { text: "Hey".to_owned() };
                 // let _ = respond_to.unwrap().send(msg);
             },
-            
+            ActorMessage::PopulateDB { respond_to, text } => {
+                let file_name = "assets/data/____credit_file.csv";
+                // let file_contents = fs::read_to_string(file_name).expect("Cannot read file");
+                // let mut rdr = Reader::from_reader(file_contents.as_bytes());
+                let result = Reader::from_path(file_name);
+                if result.is_err() {
+                    println!("Error w/ CSV");
+                    std::process::exit(9);
+                }
+                let mut rdr = result.unwrap();
+                // let mut rows = rdr.deserialize().map(|r| r.unwrap()).collect::<Vec<Review>>();
+                // for record in rdr.records() {
+                //     println!("First field is {}", record.unwrap().get(0).unwrap())
+                // }
+                let mut rows = rdr.deserialize().map(|r| r.unwrap()).collect::<Vec<CreditFile>>();
+                rows.iter().take(20).for_each(|r| println!("{:?} & {:?}", r.emp_title, r.months_since_last_delinq));
+            },
         }
     }
 }

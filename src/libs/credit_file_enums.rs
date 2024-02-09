@@ -36,7 +36,7 @@ impl std::str::FromStr for IncomeVerification {
             "Verified" => Ok(IncomeVerification::Verified),
             "Source Verified" => Ok(IncomeVerification::SourceVerified),
             "Not Verified" => Ok(IncomeVerification::NotVerified),
-            _ => Err("Invalid IncomeVerification value"),
+            _ => Ok(IncomeVerification::Empty),
         }
     }
 }

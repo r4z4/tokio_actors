@@ -3,8 +3,10 @@ use std::sync::Arc;
 use askama::Template;
 use axum::{http::StatusCode, response::{IntoResponse, Response}, routing::get, Router, debug_handler};
 use axum::response::sse::{Event, Sse};
+use serde::Deserialize;
+use sqlx::FromRow;
 use std::sync::Mutex;
-use crate::{users::AuthSession, models::auth::CurrentUser};
+use crate::{actors::actor::mock_offer, models::{auth::CurrentUser, offer::Offer}, users::AuthSession};
 use axum_extra::{headers, TypedHeader};
 use async_stream::try_stream;
 use axum::routing::post;
@@ -18,6 +20,18 @@ pub fn router() -> Router<Arc<Mutex<SharedState>>> {
         .route("/application", get(self::get::get_application))
         .route("/apply", post(self::post::apply))
         .route("/offer-score", get(self::get::offer_score))
+}
+
+fn get_comp_offer(app: ApplicationPostResponse) -> Offer {
+    // let offers = aggregate_offers(1);
+    let lc_offer = mock_offer(1);
+    // let lc_offers = vec![&lc_offer];
+    lc_offer
+}
+
+#[derive(Debug, Deserialize, FromRow)]
+pub struct ApplicationPostResponse {
+    pub application_id: i32,
 }
 
 mod post {
@@ -58,11 +72,7 @@ mod post {
         pub employment_status: i32,
         pub emp_length: i32
     }
-    
-    #[derive(Debug, Deserialize, FromRow)]
-    pub struct ApplicationPostResponse {
-        pub application_id: i32,
-    }
+
 
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
@@ -102,9 +112,9 @@ mod post {
         match auth_session.user {
             Some(user) => {
                 let current_user = CurrentUser::new(&user.username, &user.email);
-                let offers = aggregate_offers(1);
-                let lc_offer = mock_offer(1);
-                let lc_offers = vec![&lc_offer];
+                // let offers = aggregate_offers(1);
+                // let lc_offer = mock_offer(1);
+                // let lc_offers = vec![&lc_offer];
                 dbg!(&application);
                 let is_valid = application.validate();
                 if is_valid.is_err() {
@@ -176,10 +186,11 @@ mod post {
                             // return OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
                             let _ = tokio::spawn(async move {  
                                 sleep(Duration::from_millis(5000)).await;
+                                let comp_offer = get_comp_offer(app);
                                 // Find comp record in credit file CSV and use that to decision on
                                 // Get Id form that, then look at load CSV with that ID and see if in good shape.
                                 // If so, give offer. If not, decline.
-                                state.lock().unwrap().offer_tx.clone().unwrap().send(lc_offer);
+                                state.lock().unwrap().offer_tx.clone().unwrap().send(comp_offer);
                             });
                             return (StatusCode::CREATED, ApplyOffersTemplate { message: "Hey" }).into_response()
                         }

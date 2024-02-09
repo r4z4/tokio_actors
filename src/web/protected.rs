@@ -35,7 +35,7 @@ mod get {
     use chrono::NaiveDate;
     use futures_util::{stream, Stream, StreamExt};
     use rand::{distributions::Alphanumeric, Rng};
-    use tokio::{spawn, sync::{broadcast, mpsc}, time::sleep};
+    use tokio::{spawn, sync::{broadcast, mpsc, oneshot}, time::sleep};
 
     use crate::{actors::actor::{get_mock_offers, mock_offer, ActorHandle, ActorMessage, LoopInstructions}, models::{credit_file::mock_credit_file, loan::mock_loan, offer::Offer}};
 
@@ -62,8 +62,10 @@ mod get {
         // dbg!(mock_credit_file);
         // let mock_loan = mock_loan();
         // dbg!(mock_loan);
-        let mock_offer = mock_offer(1);
-        let _ = state.lock().unwrap().offer_tx.clone().unwrap().send(mock_offer);
+
+        // let mock_offer = mock_offer(1);
+        // let _ = state.lock().unwrap().offer_tx.clone().unwrap().send(mock_offer);
+
         // let offer_handle = state.lock().unwrap().actor_handle.clone();
         // let (offer_event_tx, mut offer_event_rx) = broadcast::channel(5000);
         // let loop_instruction = LoopInstructions {iterations: 4, listen_for: None };
@@ -79,6 +81,10 @@ mod get {
         //         }
         //     }            
         // });
+        let offer_handle = ActorHandle::new();
+        let (send, recv) = oneshot::channel();
+        let offer_msg = ActorMessage::PopulateDB {respond_to: Some(send), text: "".to_owned() };
+        let _ = offer_handle.sender.send(offer_msg).await;
         // let _ = offer_handle.sender.send(offer_loop_msg).await;
         // state.lock().unwrap().offer_tx.send(rand::thread_rng().sample_iter(&Alphanumeric).take(5).map(char::from).collect::<String>());
     }
