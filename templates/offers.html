@@ -4,17 +4,21 @@
   {% endif %}
   <h1 class="main_header">Offers</h1>
     <!--<div>{{ offers|json }}</div>-->
-    <div>
+    <div class="offers_template_offers">
         {% if let Some(lc_offers) = lc_offers %}
             {% for offer in lc_offers %}
-            <div hx-get="/offer-score" hx-target="#offer_score_{{offer.offer_slug}}" hx-trigger="load">
-                <ul class="offer_list">
-                    <li>Servicer: {{ offer.servicer_id }}</li>
-                    <li>Terms: {{ offer.terms }}</li>
-                    <li>Maximum Amount: {{ offer.max_amount }}</li>
-                </ul>
-                <div id="offer_score_{{offer.offer_slug}}"></div>
-            </div>
+            <input type="radio" id="input_{{offer.offer_slug}}" name="selected_offer_{{offer.offer_slug}}" value={{offer.offer_slug}}>
+            <label for="input_{{offer.offer_slug}}">
+                <div hx-get="/offer-score" hx-target="#offer_score_{{offer.offer_slug}}" hx-trigger="load">
+                    <ul class="offer_list">
+                        <li>Servicer: {{ offer.servicer_id }}</li>
+                        <li>Terms: {{ offer.terms }}</li>
+                        <li>Maximum Amount: {{ offer.max_amount }}</li>
+                    </ul>
+                    <div id="offer_score_{{offer.offer_slug}}"></div>
+                </div>
+            </label>
+            </input>
             {% endfor %}
         {% endif %}
     </div>
