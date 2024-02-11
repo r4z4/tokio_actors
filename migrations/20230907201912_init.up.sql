@@ -646,7 +646,7 @@ CREATE OR REPLACE FUNCTION user_settings_insert_trigger_fnc()
   RETURNS trigger AS
 $$
 BEGIN
-    INSERT INTO "user_settings" ( "user_settings_id", "user_id")
+    INSERT INTO "user_settings" ( "user_settings_id", "user_id" )
          VALUES(DEFAULT, NEW."user_id");
 RETURN NEW;
 END;
@@ -658,3 +658,31 @@ CREATE TRIGGER user_settings_insert_trigger
   ON "users"
   FOR EACH ROW
   EXECUTE PROCEDURE user_settings_insert_trigger_fnc();
+
+  -- New Application Trigger via PgNotify
+
+CREATE or REPLACE FUNCTION new_app_notification_trigger() RETURNS trigger AS $$
+DECLARE
+  id int;
+  key varchar;
+  value varchar;
+BEGIN
+--   IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+    id = NEW.application_id;
+    key = NEW.application_slug;
+    value = NEW.first_name;
+--   ELSE
+--     id = OLD.id;
+--     key = OLD.key;
+--     value = OLD.val;
+--   END IF;
+    PERFORM pg_notify('new_app_notification', json_build_object('table', TG_TABLE_NAME, 'id', id, 'application_slug', key, 'first_name', value, 'action_type', TG_OP)::text );
+    RETURN NEW;
+  END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER new_app_notification 
+    AFTER INSERT 
+    ON "applications"
+    FOR EACH ROW 
+    EXECUTE PROCEDURE new_app_notification_trigger();

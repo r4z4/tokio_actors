@@ -29,6 +29,8 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS accounts;
 
 DROP TRIGGER IF EXISTS user_settings_insert_trigger ON users;
+DROP TRIGGER IF EXISTS new_app_notification ON applications;
+
 
 
 DROP TYPE IF EXISTS consultant_specialty;

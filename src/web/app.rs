@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, collections::HashMap, sync::{Arc, Mutex}, env};
+use std::{collections::HashMap, env, net::SocketAddr, sync::{Arc, Mutex, RwLock}};
 use askama::Template;
 use serde_json::json;
 use ::time::Duration;
@@ -20,14 +20,14 @@ use sendgrid::error::SendgridError;
 use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
-use tokio::{sync::{broadcast, mpsc, oneshot}, io::{AsyncRead, AsyncWrite}};
-use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{employment_options, get_state_options, marital_status_options, purpose_options, FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, models::{self, application::ApplicationTemplate, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{Backend, AuthSession}, web::{api, auth, protected, public, ws::read_and_send_messages}};
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use tokio::{io::{AsyncRead, AsyncWrite}, sync::{broadcast, mpsc, oneshot}};
+use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{employment_options, get_state_options, marital_status_options, purpose_options, FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, libs::pg_notify_handle::{start_listening, ActionType, Payload}, models::{self, application::ApplicationTemplate, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{AuthSession, Backend}, web::{api, auth, protected, public, ws::read_and_send_messages}};
+use sqlx::{postgres::{PgListener, PgPoolOptions}, PgPool};
 use sqlx::FromRow;
 use sqlx::types::time::Date;
 use tower_http::{cors::{Any, CorsLayer}, services::ServeDir};
 use tower_http::trace::{self, TraceLayer};
-use tracing::Level;
+use tracing::{info, Level};
 use deadpool_redis::{redis::{cmd}, Pool as RedisPool};
 use futures_util::{SinkExt as _, StreamExt as _, stream::{SplitSink, SplitStream}};
 use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream};
@@ -73,6 +73,20 @@ pub struct PostTemplate<'a> {
     pub post_body: &'a str,
     pub user: Option<CurrentUser>,
 }
+
+// pub async fn pg_listen_for_app_updates(pool: &PgPool) {
+//     let topic: &str = "new_app_notification";
+//     match sqlx::query::<_>(
+//         "LISTEN $1",
+//     )
+//     .bind(&topic)
+//     .execute(pool)
+//     .await 
+//     {
+//         Ok(_) => println!("yay"),
+//         Err(_) => println!("yay"),
+//     }
+// }
 
 impl App {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
@@ -156,6 +170,56 @@ impl App {
         // let url = "wss://echo.websocket.events";
         // let kraken = "wss://ws.kraken.com/";
 
+        // let _ = pg_listen_for_app_updates(&self.pool);
+        // FIXME WTF is going on here
+        // let mut listener = PgListener::connect_with(&self.pool).await.unwrap();
+        // listener.listen("new_app_notification");
+        // tokio::spawn(async move {
+        //     loop {
+        //         while let Some(notification) = listener.try_recv().await? {
+        //             info!(
+        //                 "Getting notification with payload: {:?} from channel {:?}",
+        //                 notification.payload(),
+        //                 notification.channel()
+        //             );
+        
+        //             // let strr = notification.payload().to_owned();
+        //             // let payload: T = serde_json::from_str::<T>(&strr).unwrap();
+        //             // info!("des payload is {:?}", payload);
+        
+        //             // call_back(payload);
+        //         }
+        //     }
+        // });
+
+        let channels = vec!["table_update", "new_app_notification"];
+        let hm: HashMap<String, String> = HashMap::new();
+        let constants = Arc::new(RwLock::new(hm));
+        
+        let call_back = move |payload: Payload| {
+            match payload.action_type {
+                ActionType::INSERT => {
+                    let mut constants = constants.write().unwrap();
+                    constants.insert(payload.application_slug, payload.first_name);
+                }
+                ActionType::UPDATE => {
+                    let mut constants = constants.write().unwrap();
+                    constants.insert(payload.application_slug, payload.first_name);
+                }
+                ActionType::DELETE => {
+                    let mut constants = constants.write().unwrap();
+                    constants.remove(&payload.application_slug);
+                }
+            };
+            println!("constants: {:?}", constants);
+            println!(" ");
+        };
+        let mut listener = PgListener::connect_with(&self.pool).await.unwrap();
+        listener.listen_all(channels.clone()).await?;
+        tokio::spawn({
+            start_listening(listener, channels, call_back)
+        });
+        
         // println!("Connecting to - {}", kraken);
         // let (ws_stream, _) = connect_async(kraken).await.expect("Failed to connect");
         // println!("Connected to Network");
