@@ -21,6 +21,7 @@ use sendgrid::v3::*;
 use models::auth::User;
 use serde::{Deserialize, Serialize};
 use tokio::{io::{AsyncRead, AsyncWrite}, sync::{broadcast, mpsc, oneshot}};
+use tokio_cron_scheduler::{Job, JobScheduler};
 use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{employment_options, get_state_options, marital_status_options, purpose_options, FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, libs::pg_notify_handle::{start_listening, ActionType, Payload}, models::{self, application::ApplicationTemplate, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{AuthSession, Backend}, web::{api, auth, protected, public, ws::read_and_send_messages}};
 use sqlx::{postgres::{PgListener, PgPoolOptions}, PgPool};
 use sqlx::FromRow;
@@ -129,6 +130,50 @@ impl App {
             .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
             .allow_credentials(true)
             .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
+        
+        let mut sched = JobScheduler::new().await?;
+        // Add async job
+        // sched.add(
+        //     Job::new_async("1/7 * * * * *", |uuid, mut l| {
+        //         Box::pin(async move {
+        //             println!("I run async every 7 seconds");
+
+        //             // Query the next execution time for this job
+        //             let next_tick = l.next_tick_for_job(uuid).await;
+        //             match next_tick {
+        //                 Ok(Some(ts)) => println!("Next time for 7s job is {:?}", ts),
+        //                 _ => println!("Could not get next tick for 7s job"),
+        //             }
+        //         })
+        //     })?
+        // ).await?;
+
+        sched.add(
+            Job::new_async("0 0 1 * * 1-5", |uuid, mut l| {
+                Box::pin(async move {
+                    println!("I run at 1 AM UTC each day. 7 PM Cen. Only on Weekdays (1-5)");
+
+                    // Query the next execution time for this job
+                    let next_tick = l.next_tick_for_job(uuid).await;
+                    match next_tick {
+                        Ok(Some(ts)) => println!("Next time for 7s job is {:?}", ts),
+                        _ => println!("Could not get next tick for 7s job"),
+                    }
+                })
+            })?
+        ).await?;
+
+        
+
+        // Add code to be run during/after shutdown
+        sched.set_shutdown_handler(Box::new(|| {
+            Box::pin(async move {
+                println!("Shut down done");
+            })
+        }));
+    
+        // Start the scheduler
+        sched.start().await?;
 
         // let random_data_base = "https://random-data-api.com/api/v2/";
         // let entity = "credit_cards";
