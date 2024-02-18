@@ -171,7 +171,7 @@ impl App {
             .allow_credentials(true)
             .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
 
-        let mut sched = JobScheduler::new().await?;
+        // let mut sched = JobScheduler::new().await?;
         // Add async job
         // sched.add(
         //     Job::new_async("1/7 * * * * *", |uuid, mut l| {
@@ -188,30 +188,30 @@ impl App {
         //     })?
         // ).await?;
 
-        sched
-            .add(Job::new_async("0 0 1 * * 1-5", |uuid, mut l| {
-                Box::pin(async move {
-                    println!("I run at 1 AM UTC each day. 7 PM Cen. Only on Weekdays (1-5)");
+        // sched
+        //     .add(Job::new_async("0 0 1 * * 1-5", |uuid, mut l| {
+        //         Box::pin(async move {
+        //             println!("I run at 1 AM UTC each day. 7 PM Cen. Only on Weekdays (1-5)");
 
-                    // Query the next execution time for this job
-                    let next_tick = l.next_tick_for_job(uuid).await;
-                    match next_tick {
-                        Ok(Some(ts)) => println!("Next time for 7s job is {:?}", ts),
-                        _ => println!("Could not get next tick for 7s job"),
-                    }
-                })
-            })?)
-            .await?;
+        //             // Query the next execution time for this job
+        //             let next_tick = l.next_tick_for_job(uuid).await;
+        //             match next_tick {
+        //                 Ok(Some(ts)) => println!("Next time for 7s job is {:?}", ts),
+        //                 _ => println!("Could not get next tick for 7s job"),
+        //             }
+        //         })
+        //     })?)
+        //     .await?;
 
-        // Add code to be run during/after shutdown
-        sched.set_shutdown_handler(Box::new(|| {
-            Box::pin(async move {
-                println!("Shut down done");
-            })
-        }));
+        // // Add code to be run during/after shutdown
+        // sched.set_shutdown_handler(Box::new(|| {
+        //     Box::pin(async move {
+        //         println!("Shut down done");
+        //     })
+        // }));
 
-        // Start the scheduler
-        sched.start().await?;
+        // // Start the scheduler
+        // sched.start().await?;
 
         // let random_data_base = "https://random-data-api.com/api/v2/";
         // let entity = "credit_cards";
@@ -299,7 +299,7 @@ impl App {
         };
         let mut listener = PgListener::connect_with(&self.pool).await.unwrap();
         listener.listen_all(channels.clone()).await?;
-        tokio::spawn({ start_listening(listener, channels, call_back) });
+        tokio::task::Builder::new().name("pg_notify_task").spawn({ start_listening(listener, channels, call_back) });
 
         // println!("Connecting to - {}", kraken);
         // let (ws_stream, _) = connect_async(kraken).await.expect("Failed to connect");

@@ -251,8 +251,7 @@ impl ActorHandle {
         let task_monitor = tokio_metrics::TaskMonitor::new();
         let (sender, receiver) = mpsc::channel(8);
         let mut actor = Actor::new(receiver);
-        tokio::spawn(task_monitor.clone().instrument(async move { actor.run().await }));
-
+        tokio::task::Builder::new().name("actor_task").spawn(task_monitor.clone().instrument(async move { actor.run().await }));
         Self { sender }
     }
 }

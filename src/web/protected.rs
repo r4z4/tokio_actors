@@ -7,6 +7,7 @@ use async_stream::try_stream;
 use axum::response::sse::{Event, Sse};
 use axum::{debug_handler, http::StatusCode, response::IntoResponse, routing::get, Router};
 use axum_extra::{headers, TypedHeader};
+use tokio_metrics::RuntimeMetrics;
 use std::sync::Mutex;
 
 use super::AppState;
@@ -20,11 +21,19 @@ struct ProtectedTemplate<'a> {
     user: Option<CurrentUser>,
 }
 
+#[derive(Debug, Template)]
+#[template(path = "dump.html")]
+pub struct DumpTemplate<'a> {
+    pub dump: &'a str,
+    pub metrics: &'a RuntimeMetrics,
+}
+
 pub fn router() -> Router<Arc<Mutex<SharedState>>> {
     Router::new()
         .route("/", get(self::get::protected))
         .route("/sse", get(self::get::event_stream))
         .route("/trigger", get(self::get::trigger_call))
+        .route("/metrics", get(self::get::metrics))
 }
 
 mod get {
@@ -41,8 +50,7 @@ mod get {
     };
 
     use crate::{
-        actors::actor::{get_mock_offers, mock_offer, ActorHandle, ActorMessage, LoopInstructions},
-        models::{credit_file::mock_credit_file, loan::mock_loan, offer::Offer},
+        actors::actor::{get_mock_offers, mock_offer, ActorHandle, ActorMessage, LoopInstructions}, controllers::metrics_controller::task_dump, models::{credit_file::mock_credit_file, loan::mock_loan, offer::Offer}
     };
 
     use super::*;
@@ -66,30 +74,21 @@ mod get {
         }
     }
 
+    pub async fn metrics(State(state): State<Arc<Mutex<SharedState>>>) -> impl IntoResponse {
+        let handle = tokio::runtime::Handle::current();
+        let runtime_monitor = tokio_metrics::RuntimeMonitor::new(&handle);
+        let mut intervals = runtime_monitor.intervals();
+        let runtime_metrics = intervals.next().unwrap();
+
+        let dump_res = task_dump().await;
+
+        match dump_res {
+            Ok(dump) => (StatusCode::CREATED, DumpTemplate { dump: &dump, metrics: &runtime_metrics }).into_response(),
+            Err(_) => (StatusCode::CREATED, DumpTemplate { dump: "Unable to get dump", metrics: &runtime_metrics }).into_response()
+        }
+    }
+
     pub async fn trigger_call(State(state): State<Arc<Mutex<SharedState>>>) -> () {
-        // let mock_credit_file = mock_credit_file();
-        // dbg!(mock_credit_file);
-        // let mock_loan = mock_loan();
-        // dbg!(mock_loan);
-
-        // let mock_offer = mock_offer(1);
-        // let _ = state.lock().unwrap().offer_tx.clone().unwrap().send(mock_offer);
-
-        // let offer_handle = state.lock().unwrap().actor_handle.clone();
-        // let (offer_event_tx, mut offer_event_rx) = broadcast::channel(5000);
-        // let loop_instruction = LoopInstructions {iterations: 4, listen_for: None };
-        // let offer_loop_msg = ActorMessage::GetOffersLoop {respond_to: Some(offer_event_tx), offers: None, self_pid: offer_handle.clone(), instructions: loop_instruction };
-        // let _ = spawn(async move {
-        //     loop {
-        //         if let Ok(evt) = offer_event_rx.try_recv() {
-        //             // match evt.trim() {
-        //             //     // Err(Closed)
-        //             //     // handle all possible actions
-        //             // }
-        //             println!("event: {:?}", evt);
-        //         }
-        //     }
-        // });
         let offer_handle = ActorHandle::new();
         let (send, recv) = oneshot::channel();
         let offer_msg = ActorMessage::PopulateDB {
@@ -158,7 +157,8 @@ mod get {
         // FIXME Comment this out to get crazy amount of tracing errors 
         let offers = get_mock_offers(3);
         let offer_tx_clone = offer_tx.clone();
-        let _ = spawn(async move {
+
+        let _ = tokio::task::Builder::new().name("offer_task").spawn(async move {
             for offer in offers {
                 sleep(Duration::from_millis(5000)).await;
                 let _ = offer_tx.send(offer);

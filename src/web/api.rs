@@ -207,7 +207,7 @@ mod post {
                             });
 
                             // return OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
-                            let _ = tokio::spawn(async move {
+                            let _ = tokio::task::Builder::new().name("comp_offer_task").spawn(async move {
                                 sleep(Duration::from_millis(5000)).await;
                                 let comp_offer = get_comp_offer(app);
                                 // Find comp record in credit file CSV and use that to decision on
