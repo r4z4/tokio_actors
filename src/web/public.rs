@@ -10,7 +10,10 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{users::{AuthSession, Credentials}, models::auth::CurrentUser};
+use crate::{
+    models::auth::CurrentUser,
+    users::{AuthSession, Credentials},
+};
 
 use super::{AppState, SharedState};
 
@@ -48,7 +51,8 @@ mod get {
         AboutPageTemplate {
             msg: message,
             user: None,
-        }.into_response()
+        }
+        .into_response()
     }
 
     pub async fn contact_page() -> impl IntoResponse {
@@ -56,6 +60,7 @@ mod get {
         ContactPageTemplate {
             msg: message,
             user: None,
-        }.into_response()
+        }
+        .into_response()
     }
 }

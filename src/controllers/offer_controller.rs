@@ -2,17 +2,21 @@ use std::collections::HashMap;
 use std::fs;
 use std::ops::Deref;
 
+use crate::models::credit_file::CreditFile;
+use crate::{
+    actors::actor::{ActorHandle, ActorMessage},
+    error::AppError,
+    models::{self, offer::Offer},
+};
 use askama::Template;
 use askama_axum::IntoResponse;
-use axum::{Extension, Json, response::Response, debug_handler};
+use axum::{debug_handler, response::Response, Extension, Json};
 use csv::Reader;
 use hyper::StatusCode;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use tokio::sync::oneshot;
 use tokio::time::{sleep, Duration};
-use crate::models::credit_file::CreditFile;
-use crate::{error::AppError, models::{self, offer::Offer}, actors::actor::{ActorHandle, ActorMessage}};
 
 #[derive(Debug, Template)]
 #[template(path = "offers.html")]
@@ -33,7 +37,10 @@ pub async fn get_offers(
 
     let offer_handle = ActorHandle::new();
     let (send, recv) = oneshot::channel();
-    let offer_msg = ActorMessage::GetOffers {respond_to: Some(send), offers: None };
+    let offer_msg = ActorMessage::GetOffers {
+        respond_to: Some(send),
+        offers: None,
+    };
     let _ = offer_handle.sender.send(offer_msg).await;
     let resp = recv.await;
 
@@ -59,15 +66,31 @@ pub async fn get_offers(
                     // for record in rdr.records() {
                     //     println!("First field is {}", record.unwrap().get(0).unwrap())
                     // }
-                    let mut rows = rdr.deserialize().map(|r| r.unwrap()).collect::<Vec<CreditFile>>();
-                    rows.iter().take(3).for_each(|r| println!("{:?} & {:?}", r.emp_title, r.months_since_last_delinq));
-                    OffersTemplate {offers: &offers.unwrap(), lc_offers: lc_offers, message: None}.into_response()
-                },
-                _ => (StatusCode::CREATED, AppError::GenericError("Actor Message Type in Incorrect".to_owned())).into_response()
+                    let mut rows = rdr
+                        .deserialize()
+                        .map(|r| r.unwrap())
+                        .collect::<Vec<CreditFile>>();
+                    rows.iter().take(3).for_each(|r| {
+                        println!("{:?} & {:?}", r.emp_title, r.months_since_last_delinq)
+                    });
+                    OffersTemplate {
+                        offers: &offers.unwrap(),
+                        lc_offers: lc_offers,
+                        message: None,
+                    }
+                    .into_response()
+                }
+                _ => (
+                    StatusCode::CREATED,
+                    AppError::GenericError("Actor Message Type in Incorrect".to_owned()),
+                )
+                    .into_response(),
             }
-            
-        },
-        Err(_) => (StatusCode::CREATED, AppError::GenericError("No Response from Actor Handler".to_owned())).into_response()
+        }
+        Err(_) => (
+            StatusCode::CREATED,
+            AppError::GenericError("No Response from Actor Handler".to_owned()),
+        )
+            .into_response(),
     }
-
 }

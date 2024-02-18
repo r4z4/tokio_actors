@@ -10,7 +10,10 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{users::{AuthSession, Credentials}, models::auth::CurrentUser};
+use crate::{
+    models::auth::CurrentUser,
+    users::{AuthSession, Credentials},
+};
 
 use super::{AppState, SharedState};
 

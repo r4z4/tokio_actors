@@ -4,7 +4,9 @@ use sqlx::FromRow;
 use struct_iterable::Iterable;
 use validator::Validate;
 
-use crate::libs::credit_file_enums::{deserialize_homeownership, deserialize_income_verification, deserialize_na_col};
+use crate::libs::credit_file_enums::{
+    deserialize_homeownership, deserialize_income_verification, deserialize_na_col,
+};
 
 #[derive(Debug, Validate, Serialize, Clone, FromRow, Deserialize, PartialEq, Iterable)]
 pub struct CreditFile {
@@ -36,11 +38,11 @@ pub struct CreditFile {
     pub num_collections_last_12m: i32,
     pub num_historical_failed_to_pay: i32,
     pub months_since_90d_late: Option<i32>,
-    pub current_accounts_delinq: i32,	
-    pub total_collection_amount_ever: i32,	
-    pub current_installment_accounts: i32,	
+    pub current_accounts_delinq: i32,
+    pub total_collection_amount_ever: i32,
+    pub current_installment_accounts: i32,
     pub accounts_opened_24m: i32,
-    pub months_since_last_credit_inquiry: Option<i32>,	
+    pub months_since_last_credit_inquiry: Option<i32>,
     pub num_satisfactory_accounts: i32,
     pub num_accounts_120d_past_due: Option<i32>,
     pub num_accounts_30d_past_due: i32,
@@ -64,13 +66,28 @@ impl CreditFile {
             other.iter().count()
         } else {
             let mut count = 0;
-            
+
             // if self.borrower_id == other.borrower_id {count += 1} else {};
-            if self.emp_title == other.emp_title {count += 1} else {};
-            if self.emp_length == other.emp_length {count += 1} else {};
-            if self.state == other.state {count += 1} else {};
-            if self.homeownership == other.homeownership {count += 1} else {};
-            if self.annual_income == other.borrower_id {count += 1} else {};
+            if self.emp_title == other.emp_title {
+                count += 1
+            } else {
+            };
+            if self.emp_length == other.emp_length {
+                count += 1
+            } else {
+            };
+            if self.state == other.state {
+                count += 1
+            } else {
+            };
+            if self.homeownership == other.homeownership {
+                count += 1
+            } else {
+            };
+            if self.annual_income == other.borrower_id {
+                count += 1
+            } else {
+            };
 
             // if self.verification_income_joint == other.verification_income_joint {count += 1} else {};
             // if self.debt_to_income == other.debt_to_income {count += 1} else {};
@@ -127,11 +144,23 @@ pub enum IncomeVerification {
 
 pub fn mock_credit_file() -> CreditFile {
     let mut rng = rand::thread_rng();
-    static HOMES: [HomeOwnership; 3] = [HomeOwnership::Own, HomeOwnership::Rent, HomeOwnership::Mortgage];
+    static HOMES: [HomeOwnership; 3] = [
+        HomeOwnership::Own,
+        HomeOwnership::Rent,
+        HomeOwnership::Mortgage,
+    ];
     let emp_titles = ["President", "Sales Rep", "CEO", "Support Specialist"];
-    let income_verification = [IncomeVerification::Verified,IncomeVerification::NotVerified, IncomeVerification::SourceVerified];
-    let homeownership = [HomeOwnership::Own,HomeOwnership::Mortgage, HomeOwnership::Rent];
-    let incomes = [80000,75000,55000,75000];
+    let income_verification = [
+        IncomeVerification::Verified,
+        IncomeVerification::NotVerified,
+        IncomeVerification::SourceVerified,
+    ];
+    let homeownership = [
+        HomeOwnership::Own,
+        HomeOwnership::Mortgage,
+        HomeOwnership::Rent,
+    ];
+    let incomes = [80000, 75000, 55000, 75000];
     let limits = [84756, 37463, 57343, 2234, 47364];
     let floats: [f32; 3] = [4.4, 8.8, 33.3];
     let years = [1999, 2003, 2008, 2016, 2019];
@@ -143,10 +172,14 @@ pub fn mock_credit_file() -> CreditFile {
         state: "MN".to_owned(),
         homeownership: homeownership[rand::thread_rng().gen_range(0..homeownership.len())].clone(),
         annual_income: incomes[rand::thread_rng().gen_range(0..incomes.len())],
-        verified_income: income_verification[rand::thread_rng().gen_range(0..income_verification.len())].clone(),
+        verified_income: income_verification
+            [rand::thread_rng().gen_range(0..income_verification.len())]
+        .clone(),
         debt_to_income: Some(floats[rand::thread_rng().gen_range(0..floats.len())]),
         annual_income_joint: Some(incomes[rand::thread_rng().gen_range(0..incomes.len())]),
-        verification_income_joint: income_verification[rand::thread_rng().gen_range(0..income_verification.len())].clone(),
+        verification_income_joint: income_verification
+            [rand::thread_rng().gen_range(0..income_verification.len())]
+        .clone(),
         debt_to_income_joint: Some(floats[rand::thread_rng().gen_range(0..floats.len())]),
         delinq_2y: one_to_five,
         months_since_last_delinq: Some(one_to_five),
@@ -159,11 +192,11 @@ pub fn mock_credit_file() -> CreditFile {
         num_collections_last_12m: one_to_five,
         num_historical_failed_to_pay: one_to_five,
         months_since_90d_late: Some(one_to_five),
-        current_accounts_delinq: one_to_five,	
-        total_collection_amount_ever: one_to_five,	
-        current_installment_accounts: one_to_five,	
+        current_accounts_delinq: one_to_five,
+        total_collection_amount_ever: one_to_five,
+        current_installment_accounts: one_to_five,
         accounts_opened_24m: one_to_five,
-        months_since_last_credit_inquiry: Some(one_to_five),	
+        months_since_last_credit_inquiry: Some(one_to_five),
         num_satisfactory_accounts: one_to_five,
         num_accounts_120d_past_due: Some(one_to_five),
         num_accounts_30d_past_due: one_to_five,

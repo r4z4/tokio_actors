@@ -1,6 +1,6 @@
-use std::{thread, sync::Arc};
+use super::redis_mod::{PubSubMsg, RedisState};
 use redis::{ControlFlow, PubSubCommands};
-use super::redis_mod::{RedisState, PubSubMsg};
+use std::{sync::Arc, thread};
 
 pub fn subscribe(state: &impl RedisState) -> thread::JoinHandle<()> {
     let client = Arc::clone(state.client());

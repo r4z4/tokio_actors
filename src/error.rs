@@ -1,4 +1,4 @@
-use axum::{response::IntoResponse, http::StatusCode, Json};
+use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde_json::json;
 
 #[derive(Debug)]
@@ -34,12 +34,17 @@ impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
         let (status, err_msg) = match self {
             Self::GenericError(s) => (StatusCode::INTERNAL_SERVER_ERROR, "Generic Error"),
-            Self::InternalServerError => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error"),
+            Self::InternalServerError => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error")
+            }
             Self::InvalidToken => (StatusCode::BAD_REQUEST, "invalid token"),
             Self::MissingCredential(s) => (StatusCode::BAD_REQUEST, "Missing credential(s)"),
             Self::ConfigMissingEnv(s) => (StatusCode::BAD_REQUEST, "Unable to find Env Var"),
             Self::FailToCreatePool => (StatusCode::BAD_REQUEST, "Failed to create DB Pool"),
-            Self::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create a token"),
+            Self::TokenCreation => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create a token",
+            ),
             Self::UserDoesNotExist => (StatusCode::UNAUTHORIZED, "No user found"),
             Self::UserAlreadyExists(s) => (StatusCode::BAD_REQUEST, "User already exists"),
         };

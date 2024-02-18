@@ -1,8 +1,8 @@
+use crate::web::utils::validate_amount;
 use chrono::NaiveDate;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use validator::Validate;
-use crate::web::utils::validate_amount;
 
 #[derive(Debug, Validate, Serialize, Clone, FromRow, Deserialize)]
 pub struct Servicer {

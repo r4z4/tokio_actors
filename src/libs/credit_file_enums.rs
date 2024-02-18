@@ -1,6 +1,6 @@
-use std::str::FromStr;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 use crate::models::credit_file::{HomeOwnership, IncomeVerification};
 
@@ -52,7 +52,7 @@ pub fn convert_income_verification(iv_str: &str) -> Result<IncomeVerification, &
 pub fn handle_na_col(col_val: &str) -> Result<Option<i32>, &'static str> {
     match col_val {
         "NA" => Ok(None),
-        _ => Ok(Some(col_val.parse::<i32>().unwrap()))
+        _ => Ok(Some(col_val.parse::<i32>().unwrap())),
     }
 }
 
@@ -64,7 +64,9 @@ where
     convert_homeownership(ho_str).map_err(serde::de::Error::custom)
 }
 
-pub fn deserialize_income_verification<'de, D>(deserializer: D) -> Result<IncomeVerification, D::Error>
+pub fn deserialize_income_verification<'de, D>(
+    deserializer: D,
+) -> Result<IncomeVerification, D::Error>
 where
     D: serde::Deserializer<'de>,
 {

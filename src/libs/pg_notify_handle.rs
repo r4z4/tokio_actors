@@ -30,7 +30,6 @@ pub async fn start_listening<T: DeserializeOwned + Sized + Debug>(
     channels: Vec<&str>,
     call_back: impl Fn(T),
 ) -> Result<(), Error> {
-    
     // let mut listener = PgListener::connect_with(pool).await.unwrap();
     // listener.listen_all(channels).await?;
     loop {

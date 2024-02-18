@@ -1,8 +1,8 @@
+use crate::web::utils::validate_amount;
 use chrono::NaiveDate;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use validator::Validate;
-use crate::web::utils::validate_amount;
 
 use super::auth::CurrentUser;
 
@@ -18,7 +18,6 @@ pub struct Offer {
     pub apr: f32,
     pub expires: NaiveDate,
 }
-
 
 // Ensure can be sent safely between thread
 // Don't even need to run test. Compile time check.

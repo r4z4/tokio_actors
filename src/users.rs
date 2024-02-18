@@ -72,7 +72,7 @@ impl AuthnBackend for Backend {
         Ok(user.filter(|user| {
             verify_password(creds.password, &user.password)
                 .ok()
-                .is_some() 
+                .is_some()
         }))
     }
 

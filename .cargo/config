@@ -1,0 +1,8 @@
+[alias]
+b = "build"
+t = "test"
+r = "run"
+
+[build]
+rustflags = ["--cfg", "tokio_unstable"]
+     

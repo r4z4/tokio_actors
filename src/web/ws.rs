@@ -1,5 +1,5 @@
-use futures_util::{SinkExt as _, StreamExt as _, stream::SplitSink};
-use tokio::io::{AsyncRead, AsyncWrite, self, AsyncBufReadExt};
+use futures_util::{stream::SplitSink, SinkExt as _, StreamExt as _};
+use tokio::io::{self, AsyncBufReadExt, AsyncRead, AsyncWrite};
 use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream};
 
 pub async fn start() {
@@ -11,7 +11,7 @@ pub async fn start() {
 
     let (mut write, mut read) = ws_stream.split();
 
-    if let Some(message) = read.next().await{
+    if let Some(message) = read.next().await {
         let message = message.expect("Failed to read msg");
         println!("Received a message - {}", message);
     }
@@ -20,17 +20,22 @@ pub async fn start() {
     println!("Sending message - {}", msg);
     write.send(msg).await.expect("Failed to send message");
 
-    if let Some(message) = read.next().await{
+    if let Some(message) = read.next().await {
         let message = message.expect("Failed to read msg");
         println!("Received a message - {}", message);
     }
 }
 
-pub async fn read_and_send_messages(mut write: SplitSink<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>, Message>) {
+pub async fn read_and_send_messages(
+    mut write: SplitSink<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>, Message>,
+) {
     let mut reader = io::BufReader::new(io::stdin()).lines();
     while let Some(line) = reader.next_line().await.expect("Failed to read") {
         if !line.trim().is_empty() {
-            write.send(Message::Text(line)).await.expect("Filed to send")
+            write
+                .send(Message::Text(line))
+                .await
+                .expect("Filed to send")
         }
     }
 }

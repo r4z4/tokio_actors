@@ -2,10 +2,10 @@ pub use app::App;
 pub use app::AppState;
 pub use app::SharedState;
 
-mod ws;
+mod api;
 mod app;
 mod auth;
-mod public;
 mod protected;
-mod api;
+mod public;
 pub mod utils;
+mod ws;

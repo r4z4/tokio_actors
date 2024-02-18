@@ -28,7 +28,7 @@ enum DirtyMonth {
     Sep = 9,
     Oct = 10,
     Nov = 11,
-    Dec = 12
+    Dec = 12,
 }
 
 impl Into<u32> for DirtyMonth {
@@ -58,7 +58,7 @@ impl std::str::FromStr for DirtyMonth {
 
 pub fn convert_date(date_str: &str) -> Option<NaiveDate> {
     let date_str = remove_prefix(date_str);
-    let (m,d,y) = date_str_into_parts(date_str)?;
+    let (m, d, y) = date_str_into_parts(date_str)?;
     let month = m.parse::<DirtyMonth>().ok().unwrap().into();
     let day = d.trim_end_matches(",").parse::<u32>().ok()?;
     let year = y.parse::<i32>().ok()?;

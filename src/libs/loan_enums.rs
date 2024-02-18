@@ -1,8 +1,10 @@
-use std::str::FromStr;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
-use crate::models::loan::{ApplicationType, DisbursementMethod, InitialListingStatus, LoanPurpose, LoanStatus};
+use crate::models::loan::{
+    ApplicationType, DisbursementMethod, InitialListingStatus, LoanPurpose, LoanStatus,
+};
 
 impl Into<u32> for LoanPurpose {
     fn into(self) -> u32 {

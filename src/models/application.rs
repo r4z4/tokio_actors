@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use validator::Validate;
 
-use crate::config::{default_state_opts, employment_options, get_state_options, homeownership_options, marital_status_options, purpose_options, FormErrorResponse, SelectOption, StringSelectOption};
+use crate::config::{
+    default_state_opts, employment_options, get_state_options, homeownership_options,
+    marital_status_options, purpose_options, FormErrorResponse, SelectOption, StringSelectOption,
+};
 
 use super::auth::CurrentUser;
 
@@ -33,25 +36,25 @@ pub struct Application<'a> {
 impl Default for Application<'_> {
     fn default() -> Self {
         Self {
-            consultant_id:1, 
-            desired_loan_amount: 56000, 
-            employment_status:1,
+            consultant_id: 1,
+            desired_loan_amount: 56000,
+            employment_status: 1,
             emp_length: 3,
-            location_id:1,
-            purpose_id:1,
-            homeownership:1,
+            location_id: 1,
+            purpose_id: 1,
+            homeownership: 1,
             annual_income: 75000,
-            ssn:"666-66-6666", 
-            dob: "07-24-1987", 
+            ssn: "666-66-6666",
+            dob: "07-24-1987",
             first_name: "Jimbo",
             last_name: "Smith",
-            address_one: "7724 Pine Cir", 
-            address_two: "", 
-            city:"Omaha",
-            state: "NE", 
+            address_one: "7724 Pine Cir",
+            address_two: "",
+            city: "Omaha",
+            state: "NE",
             zip: "68124",
-            phone: "402-392-0126", 
-            contact_id: 1
+            phone: "402-392-0126",
+            contact_id: 1,
         }
     }
 }
@@ -77,34 +80,34 @@ impl ApplicationTemplate<'_> {
     pub fn custom_default(user: Option<CurrentUser>, state_opts: Vec<StringSelectOption>) -> Self {
         ApplicationTemplate {
             user: user,
-            message:None,
+            message: None,
             consultant_options: employment_options(),
             location_options: employment_options(),
-            marital_options: marital_status_options(), 
+            marital_options: marital_status_options(),
             employment_options: employment_options(),
             purpose_options: purpose_options(),
-            homeownership_options: homeownership_options(), 
-            entity: None, 
-            validation_errors: FormErrorResponse { errors: None }, 
-            state_options: state_opts, 
-            contact_options: employment_options()
+            homeownership_options: homeownership_options(),
+            entity: None,
+            validation_errors: FormErrorResponse { errors: None },
+            state_options: state_opts,
+            contact_options: employment_options(),
         }
     }
     pub fn example(user: Option<CurrentUser>, state_opts: Vec<StringSelectOption>) -> Self {
         let app = Application::default();
         ApplicationTemplate {
             user: user,
-            message:None,
+            message: None,
             consultant_options: employment_options(),
             location_options: employment_options(),
-            marital_options: marital_status_options(), 
+            marital_options: marital_status_options(),
             employment_options: employment_options(),
             purpose_options: purpose_options(),
-            homeownership_options: homeownership_options(), 
-            entity: Some(app), 
-            validation_errors: FormErrorResponse { errors: None }, 
-            state_options: state_opts, 
-            contact_options: employment_options()
+            homeownership_options: homeownership_options(),
+            entity: Some(app),
+            validation_errors: FormErrorResponse { errors: None },
+            state_options: state_opts,
+            contact_options: employment_options(),
         }
     }
 }
@@ -114,17 +117,17 @@ impl Default for ApplicationTemplate<'_> {
         // let id = thread_rng().gen_range(0..999999);
         Self {
             user: None,
-            message:None,
+            message: None,
             consultant_options: employment_options(),
             location_options: employment_options(),
-            marital_options: marital_status_options(), 
+            marital_options: marital_status_options(),
             employment_options: employment_options(),
             purpose_options: purpose_options(),
-            homeownership_options: homeownership_options(), 
-            entity: None, 
-            validation_errors: FormErrorResponse { errors: None }, 
-            state_options: default_state_opts(), 
-            contact_options: employment_options()
+            homeownership_options: homeownership_options(),
+            entity: None,
+            validation_errors: FormErrorResponse { errors: None },
+            state_options: default_state_opts(),
+            contact_options: employment_options(),
         }
     }
 }

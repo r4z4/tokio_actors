@@ -1,38 +1,81 @@
-use std::{collections::HashMap, env, net::SocketAddr, sync::{Arc, Mutex, RwLock}};
-use askama::Template;
-use serde_json::json;
+use crate::{
+    actors::actor::{
+        self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions,
+    },
+    config::{
+        employment_options, get_state_options, marital_status_options, purpose_options,
+        FormErrorResponse, SelectOption,
+    },
+    controllers::{offer_controller::get_offers, ticker_controller::get_ticker},
+    error::AppError,
+    libs::pg_notify_handle::{start_listening, ActionType, Payload},
+    models::{
+        self,
+        application::ApplicationTemplate,
+        auth::{CurrentUser, CurrentUserOpt},
+        offer::Offer,
+        payment::CreditCardApiResp,
+        store::new_db_pool,
+    },
+    redis_mod::redis_mod::{redis_client, redis_connect},
+    users::{AuthSession, Backend},
+    web::{api, auth, protected, public, ws::read_and_send_messages},
+};
 use ::time::Duration;
-use axum::{
-    routing::{get, post},
-    http::{StatusCode, Request, Uri},
-    Json, Router, debug_handler, extract::{Query, State, ConnectInfo}, Extension, response::{IntoResponse, Response}, body::Body,
-};
-use axum_login::{
-    login_required,
-    tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer, PostgresStore},
-    AuthManagerLayerBuilder,
-};
+use askama::Template;
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     HeaderValue, Method,
 };
+use axum::{
+    body::Body,
+    debug_handler,
+    extract::{ConnectInfo, Query, State},
+    http::{Request, StatusCode, Uri},
+    response::{IntoResponse, Response},
+    routing::{get, post},
+    Extension, Json, Router,
+};
+use axum_login::{
+    login_required,
+    tower_sessions::{ExpiredDeletion, Expiry, PostgresStore, SessionManagerLayer},
+    AuthManagerLayerBuilder,
+};
+use deadpool_redis::{redis::cmd, Pool as RedisPool};
+use futures_util::{
+    stream::{SplitSink, SplitStream},
+    SinkExt as _, StreamExt as _,
+};
+use models::auth::User;
 use sendgrid::error::SendgridError;
 use sendgrid::v3::*;
-use models::auth::User;
 use serde::{Deserialize, Serialize};
-use tokio::{io::{AsyncRead, AsyncWrite}, sync::{broadcast, mpsc, oneshot}};
-use tokio_cron_scheduler::{Job, JobScheduler};
-use crate::{actors::actor::{self, Actor, ActorHandle, ActorMessage, ActorResponse, CreateActor, LoopInstructions}, config::{employment_options, get_state_options, marital_status_options, purpose_options, FormErrorResponse, SelectOption}, controllers::{offer_controller::get_offers, ticker_controller::get_ticker}, error::AppError, libs::pg_notify_handle::{start_listening, ActionType, Payload}, models::{self, application::ApplicationTemplate, auth::{CurrentUser, CurrentUserOpt}, offer::Offer, payment::CreditCardApiResp, store::new_db_pool}, redis_mod::redis_mod::{redis_client, redis_connect}, users::{AuthSession, Backend}, web::{api, auth, protected, public, ws::read_and_send_messages}};
-use sqlx::{postgres::{PgListener, PgPoolOptions}, PgPool};
-use sqlx::FromRow;
+use serde_json::json;
 use sqlx::types::time::Date;
-use tower_http::{cors::{Any, CorsLayer}, services::ServeDir};
-use tower_http::trace::{self, TraceLayer};
-use tracing::{info, Level};
-use deadpool_redis::{redis::{cmd}, Pool as RedisPool};
-use futures_util::{SinkExt as _, StreamExt as _, stream::{SplitSink, SplitStream}};
+use sqlx::FromRow;
+use sqlx::{
+    postgres::{PgListener, PgPoolOptions},
+    PgPool,
+};
+use std::{
+    collections::HashMap,
+    env,
+    net::SocketAddr,
+    sync::{Arc, Mutex, RwLock},
+};
+use tokio::{
+    io::{AsyncRead, AsyncWrite},
+    sync::{broadcast, mpsc, oneshot},
+};
+use tokio_cron_scheduler::{Job, JobScheduler};
 use tokio_tungstenite::{connect_async, tungstenite::Message, WebSocketStream};
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
+use tower_http::trace::{self, TraceLayer};
+use tower_http::{
+    cors::{Any, CorsLayer},
+    services::ServeDir,
+};
+use tracing::{info, Level};
 
 // mod errors;
 // mod handlers;
@@ -82,7 +125,7 @@ pub struct PostTemplate<'a> {
 //     )
 //     .bind(&topic)
 //     .execute(pool)
-//     .await 
+//     .await
 //     {
 //         Ok(_) => println!("yay"),
 //         Err(_) => println!("yay"),
@@ -107,17 +150,7 @@ impl App {
 
         Ok(Self { pool, r_pool })
     }
-        
-        // collects the arguments when we run:
-        // cargo run --bin markd "A title" ./post.md
-        // et args: Vec<String> = env::args().collect();
-            
-        // // initialize tracing
-        // tracing_subscriber::fmt()
-        //     .with_target(false)
-        //     // .compact()
-        //     .json()
-        //     .init();
+
     pub async fn serve(self) -> Result<(), Box<dyn std::error::Error>> {
         // println!("Serve");
         // let cors = CorsLayer::new().allow_origin(Any);
@@ -125,12 +158,19 @@ impl App {
         // Get them right away here FIXME: Redis cache
         // populate_cache()
 
+        let metrics: tokio::runtime::RuntimeMetrics = tokio::runtime::Handle::current().metrics();
+        for _ in 0..10 {
+            tokio::spawn(tokio::time::sleep(core::time::Duration::from_millis(10)));
+        }
+        let n = metrics.active_tasks_count();
+        println!("Runtime has {} active tasks", n);
+
         let cors = CorsLayer::new()
             .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
             .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
             .allow_credentials(true)
             .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
-        
+
         let mut sched = JobScheduler::new().await?;
         // Add async job
         // sched.add(
@@ -148,8 +188,8 @@ impl App {
         //     })?
         // ).await?;
 
-        sched.add(
-            Job::new_async("0 0 1 * * 1-5", |uuid, mut l| {
+        sched
+            .add(Job::new_async("0 0 1 * * 1-5", |uuid, mut l| {
                 Box::pin(async move {
                     println!("I run at 1 AM UTC each day. 7 PM Cen. Only on Weekdays (1-5)");
 
@@ -160,10 +200,8 @@ impl App {
                         _ => println!("Could not get next tick for 7s job"),
                     }
                 })
-            })?
-        ).await?;
-
-        
+            })?)
+            .await?;
 
         // Add code to be run during/after shutdown
         sched.set_shutdown_handler(Box::new(|| {
@@ -171,7 +209,7 @@ impl App {
                 println!("Shut down done");
             })
         }));
-    
+
         // Start the scheduler
         sched.start().await?;
 
@@ -201,10 +239,10 @@ impl App {
         //         m.get_payload::<String>()
         //             .map_err(|e| e.to_string())
         //     });
-            // .boxed();
+        // .boxed();
 
         // let _ = redis_test_data(&r_pool).await;
-    
+
         // Using GlitchTip. Works with the Rust Sentry SDK
         // let _guard = sentry::init("https://ec778decf4e94595b5a48520185298c3@app.glitchtip.com/5073");
 
@@ -227,11 +265,11 @@ impl App {
         //                 notification.payload(),
         //                 notification.channel()
         //             );
-        
+
         //             // let strr = notification.payload().to_owned();
         //             // let payload: T = serde_json::from_str::<T>(&strr).unwrap();
         //             // info!("des payload is {:?}", payload);
-        
+
         //             // call_back(payload);
         //         }
         //     }
@@ -240,7 +278,7 @@ impl App {
         let channels = vec!["table_update", "new_app_notification"];
         let hm: HashMap<String, String> = HashMap::new();
         let constants = Arc::new(RwLock::new(hm));
-        
+
         let call_back = move |payload: Payload| {
             match payload.action_type {
                 ActionType::INSERT => {
@@ -261,10 +299,8 @@ impl App {
         };
         let mut listener = PgListener::connect_with(&self.pool).await.unwrap();
         listener.listen_all(channels.clone()).await?;
-        tokio::spawn({
-            start_listening(listener, channels, call_back)
-        });
-        
+        tokio::spawn({ start_listening(listener, channels, call_back) });
+
         // println!("Connecting to - {}", kraken);
         // let (ws_stream, _) = connect_async(kraken).await.expect("Failed to connect");
         // println!("Connected to Network");
@@ -283,16 +319,26 @@ impl App {
         // write.send(subscribe_msg).await.expect("Failed to send message");
         // let _ = tokio::try_join!(read_handle);
         let actor_handle = ActorHandle::new();
-        let msg = ActorMessage::RegularMessage { text: "Hey from Main".to_owned() };
+        let msg = ActorMessage::RegularMessage {
+            text: "Hey from Main".to_owned(),
+        };
         let _ = actor_handle.sender.send(msg).await;
 
         // let state = AppState { name: None, actor_handle: actor_handle.clone() };
 
-        let state = Arc::new(Mutex::new(SharedState { name: None, actor_handle: actor_handle.clone(), offer_tx: None, offer_rx: None }));
+        let state = Arc::new(Mutex::new(SharedState {
+            name: None,
+            actor_handle: actor_handle.clone(),
+            offer_tx: None,
+            offer_rx: None,
+        }));
 
         let offer_handle = ActorHandle::new();
         let (send, recv) = oneshot::channel();
-        let offer_msg = ActorMessage::GetOffers {respond_to: Some(send), offers: None };
+        let offer_msg = ActorMessage::GetOffers {
+            respond_to: Some(send),
+            offers: None,
+        };
         // let (offer_event_tx, mut offer_event_rx) = broadcast::channel(5000);
         // let loop_instruction = LoopInstructions {iterations: 4, listen_for: None };
         // let offer_loop_msg = ActorMessage::GetOffersLoop {respond_to: Some(offer_event_tx), offers: None, self_pid: offer_handle.clone(), instructions: loop_instruction };
@@ -305,10 +351,10 @@ impl App {
         // let mut cool_header = HashMap::with_capacity(2);
         // cool_header.insert(String::from("x-cool"), String::from("indeed"));
         // cool_header.insert(String::from("x-cooler"), String::from("cold"));
-    
+
         // // Personalization = Destination addr
         // let p = Personalization::new(Email::new("ar3rz3@gmail.com")).add_headers(cool_header);
-    
+
         // // Create a new message from SendGrid Identity (From addr)
         // let m = sendgrid::v3::Message::new(Email::new("r4z4aa@gmail.com"))
         //     .set_subject("Subject")
@@ -318,7 +364,7 @@ impl App {
         //             .set_value("Test from Rust"),
         //     )
         //     .add_personalization(p);
-    
+
         // let mut env_vars = ::std::env::vars();
         // let api_key = env_vars.find(|v| v.0 == "SENDGRID_API_KEY").unwrap();
         // let sender = Sender::new(api_key.1);
@@ -337,12 +383,10 @@ impl App {
         let governor_limiter = governor_conf.limiter().clone();
         let interval = std::time::Duration::from_secs(60);
         // a separate background task to clean up
-        std::thread::spawn(move || {
-            loop {
-                std::thread::sleep(interval);
-                tracing::info!("rate limiting storage size: {}", governor_limiter.len());
-                governor_limiter.retain_recent();
-            }
+        std::thread::spawn(move || loop {
+            std::thread::sleep(interval);
+            tracing::info!("rate limiting storage size: {}", governor_limiter.len());
+            governor_limiter.retain_recent();
         });
 
         let session_store = PostgresStore::new(self.pool.clone());
@@ -389,16 +433,19 @@ impl App {
             )
             .with_state(state.into())
             .nest_service("/assets", ServeDir::new("assets"));
-            // Routes with a different state
+        // Routes with a different state
 
         // run our app with hyper, listening globally on port 3000
         let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
         tracing::debug!("Listening on {}", addr);
         // let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
         let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-        axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
-            .await
-            .unwrap();
+        axum::serve(
+            listener,
+            app.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .await
+        .unwrap();
 
         Ok(())
     }
@@ -409,18 +456,28 @@ async fn root() -> &'static str {
     "Hello, World!"
 }
 
-async fn subscribe_to(write: &mut SplitSink<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>, Message>) {
+async fn subscribe_to(
+    write: &mut SplitSink<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>, Message>,
+) {
     println!("Firing Subscribe");
-    let subscribe_msg = Message::Text(json!({
-        "event": "subscribe",
-        "pair": ["XBT/USD"],
-        "subscription": json!({"name": "*"})
-      }).to_string());
+    let subscribe_msg = Message::Text(
+        json!({
+          "event": "subscribe",
+          "pair": ["XBT/USD"],
+          "subscription": json!({"name": "*"})
+        })
+        .to_string(),
+    );
     println!("Sending message - {}", subscribe_msg);
-    write.send(subscribe_msg).await.expect("Failed to send message");
+    write
+        .send(subscribe_msg)
+        .await
+        .expect("Failed to send message");
 }
 
-async fn handle_incoming_messages(mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>) {
+async fn handle_incoming_messages(
+    mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>,
+) {
     while let Some(message) = read.next().await {
         match message {
             Ok(msg) => println!("Received a message: {}", msg),
@@ -433,7 +490,7 @@ async fn handle_incoming_messages(mut read: SplitStream<WebSocketStream<impl Asy
 async fn get_users(
     State(state): State<Arc<Mutex<SharedState>>>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    Query(params): Query<HashMap<String,String>>,
+    Query(params): Query<HashMap<String, String>>,
     auth_session: AuthSession,
     Extension(pool): Extension<PgPool>,
 ) -> Response {
@@ -441,7 +498,7 @@ async fn get_users(
     // let _ = state.lock().unwrap().actor_handle.sender.send(msg).await;
 
     let users = sqlx::query_as::<_, models::auth::User>(
-        "SELECT user_id, email, username, created_at, updated_at FROM users;"
+        "SELECT user_id, email, username, created_at, updated_at FROM users;",
     )
     .fetch_all(&pool)
     .await
@@ -450,16 +507,23 @@ async fn get_users(
         AppError::InternalServerError
     });
 
-    let current_user = 
-        match auth_session.user {
-            Some(user) => Some(CurrentUser {username: user.username, email: user.email}),
-            _ => None,
-        };
+    let current_user = match auth_session.user {
+        Some(user) => Some(CurrentUser {
+            username: user.username,
+            email: user.email,
+        }),
+        _ => None,
+    };
 
     match users {
         // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
-        Ok(users) => UsersTemplate {users: &users, message: None, user: current_user}.into_response(),
-        Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
+        Ok(users) => UsersTemplate {
+            users: &users,
+            message: None,
+            user: current_user,
+        }
+        .into_response(),
+        Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response(),
     }
 }
 
@@ -475,7 +539,7 @@ async fn create_user(
     // as JSON into a `CreateUser` type
     auth_session: AuthSession,
     State(state): State<Arc<Mutex<SharedState>>>,
-    Query(params): Query<HashMap<String,String>>,
+    Query(params): Query<HashMap<String, String>>,
     Json(payload): Json<CreateUser>,
 ) -> (StatusCode, Json<ReturnUserObject>) {
     // insert your application logic here
@@ -504,9 +568,7 @@ async fn get_actor(
     Json(payload): Json<CreateActor>,
 ) -> (StatusCode, Json<ActorResponse>) {
     // insert your application logic here
-    let resp = ActorResponse {
-        name: payload.name,
-    };
+    let resp = ActorResponse { name: payload.name };
 
     // this will be converted into a JSON response
     // with a status code of `201 Created`

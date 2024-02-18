@@ -1,16 +1,25 @@
 use std::sync::Arc;
 
+use crate::{
+    actors::actor::mock_offer,
+    models::{auth::CurrentUser, offer::Offer},
+    users::AuthSession,
+};
 use askama::Template;
-use axum::{http::StatusCode, response::{IntoResponse, Response}, routing::get, Router, debug_handler};
+use async_stream::try_stream;
 use axum::response::sse::{Event, Sse};
+use axum::routing::post;
+use axum::{
+    debug_handler,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::get,
+    Router,
+};
+use axum_extra::{headers, TypedHeader};
 use serde::Deserialize;
 use sqlx::FromRow;
 use std::sync::Mutex;
-use crate::{actors::actor::mock_offer, models::{auth::CurrentUser, offer::Offer}, users::AuthSession};
-use axum_extra::{headers, TypedHeader};
-use async_stream::try_stream;
-use axum::routing::post;
-
 
 use super::AppState;
 use super::SharedState;
@@ -44,10 +53,18 @@ mod post {
     use serde::Deserialize;
     use serde_json::json;
     use sqlx::{types::Uuid, FromRow, PgPool};
-    use tokio::{spawn, sync::{broadcast, mpsc}, time::sleep};
+    use tokio::{
+        spawn,
+        sync::{broadcast, mpsc},
+        time::sleep,
+    };
     use validator::Validate;
 
-    use crate::{actors::actor::{aggregate_offers, mock_offer}, config::{get_validation_response, FormErrorResponse, UserAlert}, controllers::offer_controller::OffersTemplate};
+    use crate::{
+        actors::actor::{aggregate_offers, mock_offer},
+        config::{get_validation_response, FormErrorResponse, UserAlert},
+        controllers::offer_controller::OffersTemplate,
+    };
 
     use super::*;
 
@@ -70,9 +87,8 @@ mod post {
         pub loan_purpose: i32,
         pub homeownership: i32,
         pub employment_status: i32,
-        pub emp_length: i32
+        pub emp_length: i32,
     }
-
 
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
@@ -93,13 +109,13 @@ mod post {
     #[derive(Debug, Template)]
     #[template(path = "form/form-validation.html")]
     struct FormValidationTemplate {
-        form_response: FormErrorResponse
+        form_response: FormErrorResponse,
     }
 
     #[derive(Debug, Template)]
     #[template(path = "apply_offers.html")]
     struct ApplyOffersTemplate<'a> {
-        pub message: &'a str
+        pub message: &'a str,
     }
 
     #[debug_handler]
@@ -127,7 +143,14 @@ mod post {
                     // return HttpResponse::BadRequest()
                     //     .header("HX-Retarget", "#location_errors")
                     //     .body(body);
-                    return (StatusCode::INTERNAL_SERVER_ERROR, headers, FormValidationTemplate { form_response: validation_response }).into_response()
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        headers,
+                        FormValidationTemplate {
+                            form_response: validation_response,
+                        },
+                    )
+                        .into_response();
                 } else {
                     let ssn_str = application.ssn.replace("-", "");
                     let dob = NaiveDate::parse_from_str(&application.dob, "%Y-%m-%d").unwrap();
@@ -184,7 +207,7 @@ mod post {
                             });
 
                             // return OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
-                            let _ = tokio::spawn(async move {  
+                            let _ = tokio::spawn(async move {
                                 sleep(Duration::from_millis(5000)).await;
                                 let comp_offer = get_comp_offer(app);
                                 // Find comp record in credit file CSV and use that to decision on
@@ -218,15 +241,30 @@ mod post {
 mod get {
     use std::{collections::HashMap, convert::Infallible, net::SocketAddr, time::Duration};
 
-    use axum::{extract::{ConnectInfo, Query, State}, response::Redirect, Extension, Form};
+    use axum::{
+        extract::{ConnectInfo, Query, State},
+        response::Redirect,
+        Extension, Form,
+    };
     use chrono::NaiveDate;
     use futures_util::{stream, Stream, StreamExt};
     use rand::{distributions::Alphanumeric, Rng};
     use serde::Deserialize;
     use sqlx::PgPool;
-    use tokio::{spawn, sync::{broadcast, mpsc}, time::sleep};
+    use tokio::{
+        spawn,
+        sync::{broadcast, mpsc},
+        time::sleep,
+    };
 
-    use crate::{config::get_state_options, error::AppError, models::{self, application::{Application, ApplicationTemplate}}};
+    use crate::{
+        config::get_state_options,
+        error::AppError,
+        models::{
+            self,
+            application::{Application, ApplicationTemplate},
+        },
+    };
 
     use super::*;
 
@@ -234,7 +272,7 @@ mod get {
     pub async fn get_application(
         State(state): State<Arc<Mutex<SharedState>>>,
         ConnectInfo(addr): ConnectInfo<SocketAddr>,
-        Query(params): Query<HashMap<String,String>>,
+        Query(params): Query<HashMap<String, String>>,
         auth_session: AuthSession,
         Extension(pool): Extension<PgPool>,
     ) -> Response {
@@ -242,7 +280,7 @@ mod get {
         // let _ = state.lock().unwrap().actor_handle.sender.send(msg).await;
 
         let users = sqlx::query_as::<_, models::auth::User>(
-            "SELECT user_id, email, username, created_at, updated_at FROM users;"
+            "SELECT user_id, email, username, created_at, updated_at FROM users;",
         )
         .fetch_all(&pool)
         .await
@@ -253,16 +291,18 @@ mod get {
 
         let state_options = get_state_options(&pool).await;
 
-        let current_user = 
-            match auth_session.user {
-                Some(user) => Some(CurrentUser {username: user.username, email: user.email}),
-                _ => None,
-            };
+        let current_user = match auth_session.user {
+            Some(user) => Some(CurrentUser {
+                username: user.username,
+                email: user.email,
+            }),
+            _ => None,
+        };
 
         match users {
             // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
             Ok(users) => ApplicationTemplate::example(current_user, state_options).into_response(),
-            Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response()
+            Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response(),
         }
     }
 
@@ -279,9 +319,12 @@ mod get {
     ) -> impl IntoResponse {
         match auth_session.user {
             Some(user) => {
-                let current_user = CurrentUser {username: user.username.clone(), email: user.email};
+                let current_user = CurrentUser {
+                    username: user.username.clone(),
+                    email: user.email,
+                };
                 let score = 100;
-                OfferScoreTemplate {score: score}.into_response()
+                OfferScoreTemplate { score: score }.into_response()
             }
             .into_response(),
 

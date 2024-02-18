@@ -37,9 +37,7 @@ impl ParseImageLink for &str {
     fn parse_image_link(&self) -> Result<Option<Url>, &'static str> {
         match self {
             &"No Images" => Ok(None),
-            _ => Url::parse(self)
-                .map(Some)            
-                .map_err(|_| "Invalid Url"),
+            _ => Url::parse(self).map(Some).map_err(|_| "Invalid Url"),
         }
     }
     fn remove_single_quotes(&self) -> &str {
@@ -68,7 +66,10 @@ mod tests {
 
     #[test]
     fn test_unbox_image_links() {
-        assert_eq!(IMAGE_LINKS_EX.unbox_image_links(), "'NonUrlString','SecondRegularString'");
+        assert_eq!(
+            IMAGE_LINKS_EX.unbox_image_links(),
+            "'NonUrlString','SecondRegularString'"
+        );
     }
 
     // #[test]
@@ -76,7 +77,7 @@ mod tests {
     //     const IMAGE_LINKS_STR: &str = "'NonUrlString','SecondRegularString'";
     //     assert_eq!(IMAGE_LINKS_STR.split_image_links(), vec!["'NonUrlString'","'SecondRegularString'"]);
     // }
-    
+
     // #[test]
     // fn test_parse_image_links() {
     //     const IMAGE_LINKS_TEST: &str = "['https://www.google.com/test','http://hello.com/photo.jpeg']";

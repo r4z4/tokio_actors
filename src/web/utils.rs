@@ -1,4 +1,4 @@
-use std::{collections::HashMap, borrow::Cow};
+use std::{borrow::Cow, collections::HashMap};
 
 use validator::ValidationError;
 
@@ -32,7 +32,9 @@ pub fn validate_primary_address(addr: &str) -> Result<(), ValidationError> {
 
 pub fn validate_amount(amt: i32) -> Result<(), ValidationError> {
     let offer_range = 2000..70000;
-    if offer_range.contains(&amt) { Ok(()) } else {
+    if offer_range.contains(&amt) {
+        Ok(())
+    } else {
         return Err(ValidationError {
             code: std::borrow::Cow::Borrowed("amount"),
             message: Some(Cow::from("Amount must be positive")),

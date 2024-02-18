@@ -1,5 +1,5 @@
 use axum::{Extension, Json};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sqlx::PgPool;
 
 use crate::{error::AppError, models};
@@ -12,7 +12,7 @@ pub async fn register(
         return Err(AppError::MissingCredential("test".to_owned()));
     }
     let user = sqlx::query_as::<_, models::auth::User>(
-        "SELECT email, password FROM users WHERE email = $1"
+        "SELECT email, password FROM users WHERE email = $1",
     )
     .bind(&credentials.email)
     .fetch_optional(&pool)
@@ -37,5 +37,4 @@ pub async fn register(
     } else {
         Ok(Json(json!({ "msg": "registered successfully" })))
     }
-
 }

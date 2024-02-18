@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-use std::fmt;
-use std::{fs::File, io::Write};
-use chrono::{Utc, NaiveDate, Datelike};
+use chrono::{Datelike, NaiveDate, Utc};
 use csv::Reader;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use std::collections::HashMap;
+use std::fmt;
+use std::{fs::File, io::Write};
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio::time::{sleep, Duration};
 
@@ -24,7 +24,7 @@ pub struct ActorResponse {
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateActor {
-    pub name: String
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -60,7 +60,7 @@ pub enum ActorMessage {
     PopulateDB {
         text: String,
         respond_to: Option<oneshot::Sender<ActorMessage>>,
-    }
+    },
 }
 
 pub fn aggregate_offers(num_lenders: i32) -> HashMap<i32, Vec<Offer>> {
@@ -70,18 +70,20 @@ pub fn aggregate_offers(num_lenders: i32) -> HashMap<i32, Vec<Offer>> {
         let offers = get_mock_offers(3);
         let servicer_id = offers[0].servicer_id;
         offers_map.insert(servicer_id, offers);
-    };
+    }
     offers_map
 }
 
 pub fn get_mock_offers(num_offers: i32) -> Vec<Offer> {
     // Want all same servicer
     let servicer_id = rand::thread_rng().gen_range(0..2);
-    let offers =
-        (0..num_offers).map(|_| {
+    let offers = (0..num_offers)
+        .map(|_| {
             let offer = mock_offer(servicer_id);
-            offer 
-        }).into_iter().collect::<Vec<Offer>>();
+            offer
+        })
+        .into_iter()
+        .collect::<Vec<Offer>>();
     dbg!(&offers);
     offers
 }
@@ -89,11 +91,11 @@ pub fn get_mock_offers(num_offers: i32) -> Vec<Offer> {
 pub fn mock_offer(servicer_id: i32) -> Offer {
     let mut rng = rand::thread_rng();
     let exp_dt = Utc::now() + chrono::Duration::days(21);
-    let terms = [12,24,36,48,64,78,96,128];
-    let test_mins = [2000,4000,5000,10000];
-    let test_maxes = [20000,35000,55000,75000];
-    let percent_fees = [1.5,2.5,3.3,4.2,5.3];
-    let aprs = [6.0,6.8,7.2,8.4,9.6,12.4,14.7];
+    let terms = [12, 24, 36, 48, 64, 78, 96, 128];
+    let test_mins = [2000, 4000, 5000, 10000];
+    let test_maxes = [20000, 35000, 55000, 75000];
+    let percent_fees = [1.5, 2.5, 3.3, 4.2, 5.3];
+    let aprs = [6.0, 6.8, 7.2, 8.4, 9.6, 12.4, 14.7];
     Offer {
         offer_slug: Uuid::new_v4().to_string(),
         servicer_id: servicer_id,
@@ -136,50 +138,72 @@ impl Actor {
                 // This can happen if the `select!` macro is used
                 // to cancel waiting for the response.
                 let _ = respond_to.send(self.next_id);
-            },
+            }
             ActorMessage::GetOffers { respond_to, offers } => {
                 println!("GetOffers received");
                 let offers = aggregate_offers(3);
                 self.next_id += 1;
                 let seconds = rand::thread_rng().gen_range(2..7);
-                let sec_opts = [3,12];
+                let sec_opts = [3, 12];
                 let seconds = sec_opts[rand::thread_rng().gen_range(0..sec_opts.len())];
                 dbg!(seconds);
-                sleep(Duration::from_millis(seconds*1000)).await;
-                let actor_message = ActorMessage::GetOffers { respond_to: None, offers: Some(offers) };
+                sleep(Duration::from_millis(seconds * 1000)).await;
+                let actor_message = ActorMessage::GetOffers {
+                    respond_to: None,
+                    offers: Some(offers),
+                };
                 if let Some(sender) = respond_to {
                     let _ = sender.send(actor_message);
                 }
-            },
+            }
             ActorMessage::GetOffersMpsc { respond_to, offers } => {
                 println!("GetOffersMpsc received");
                 let offers = aggregate_offers(3);
                 self.next_id += 1;
                 let seconds = rand::thread_rng().gen_range(2..7);
-                let sec_opts = [3,12];
+                let sec_opts = [3, 12];
                 let seconds = sec_opts[rand::thread_rng().gen_range(0..sec_opts.len())];
                 dbg!(seconds);
-                sleep(Duration::from_millis(seconds*1000)).await;
-                let actor_message = ActorMessage::GetOffers { respond_to: None, offers: Some(offers) };
+                sleep(Duration::from_millis(seconds * 1000)).await;
+                let actor_message = ActorMessage::GetOffers {
+                    respond_to: None,
+                    offers: Some(offers),
+                };
                 if let Some(sender) = respond_to {
                     let _ = sender.send(actor_message);
                 }
-            },
-            ActorMessage::GetOffersLoop { respond_to, offers, self_pid, instructions } => {
-                println!("GetOffersLoop received. Iterations Left: {}", instructions.iterations);
+            }
+            ActorMessage::GetOffersLoop {
+                respond_to,
+                offers,
+                self_pid,
+                instructions,
+            } => {
+                println!(
+                    "GetOffersLoop received. Iterations Left: {}",
+                    instructions.iterations
+                );
                 let count = instructions.iterations - 1;
                 let str = format!("From Loop: {}", count);
                 let tx = respond_to.clone().unwrap();
                 let _ = tx.send(str);
-                let new_instructions = LoopInstructions { iterations: count, listen_for: None };
+                let new_instructions = LoopInstructions {
+                    iterations: count,
+                    listen_for: None,
+                };
                 let offers = aggregate_offers(3);
                 sleep(Duration::from_millis(2000)).await;
                 // If want to loop, create message & send
                 if count > 0 {
-                    let loop_message = ActorMessage::GetOffersLoop { respond_to: respond_to, offers: Some(offers), self_pid: self_pid.clone(), instructions: new_instructions};
+                    let loop_message = ActorMessage::GetOffersLoop {
+                        respond_to: respond_to,
+                        offers: Some(offers),
+                        self_pid: self_pid.clone(),
+                        instructions: new_instructions,
+                    };
                     self_pid.sender.send(loop_message).await;
                 }
-            },
+            }
             ActorMessage::RegularMessage { text } => {
                 println!("Regular Message has been received: {}", text);
                 sleep(Duration::from_millis(9000)).await;
@@ -195,7 +219,7 @@ impl Actor {
                 // to cancel waiting for the response.
                 // let msg = ActorMessage::RegularMessage { text: "Hey".to_owned() };
                 // let _ = respond_to.unwrap().send(msg);
-            },
+            }
             ActorMessage::PopulateDB { respond_to, text } => {
                 let file_name = "assets/data/____credit_file.csv";
                 // let file_contents = fs::read_to_string(file_name).expect("Cannot read file");
@@ -210,18 +234,24 @@ impl Actor {
                 // for record in rdr.records() {
                 //     println!("First field is {}", record.unwrap().get(0).unwrap())
                 // }
-                let mut rows = rdr.deserialize().map(|r| r.unwrap()).collect::<Vec<CreditFile>>();
-                rows.iter().take(20).for_each(|r| println!("{:?} & {:?}", r.emp_title, r.months_since_last_delinq));
-            },
+                let mut rows = rdr
+                    .deserialize()
+                    .map(|r| r.unwrap())
+                    .collect::<Vec<CreditFile>>();
+                rows.iter()
+                    .take(20)
+                    .for_each(|r| println!("{:?} & {:?}", r.emp_title, r.months_since_last_delinq));
+            }
         }
     }
 }
 
 impl ActorHandle {
     pub fn new() -> Self {
+        let task_monitor = tokio_metrics::TaskMonitor::new();
         let (sender, receiver) = mpsc::channel(8);
         let mut actor = Actor::new(receiver);
-        tokio::spawn(async move { actor.run().await });
+        tokio::spawn(task_monitor.clone().instrument(async move { actor.run().await }));
 
         Self { sender }
     }

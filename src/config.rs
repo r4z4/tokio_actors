@@ -1,13 +1,20 @@
 use axum::extract::{self, ConnectInfo};
+use axum::{
+    body::{Body, Bytes},
+    extract::{Extension, Json, Query, Request},
+    http::header::HeaderMap,
+    routing::post,
+    Router,
+};
 use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 use rand::distributions::{Distribution, Uniform};
-use redis::{FromRedisValue, from_redis_value, RedisResult, Value, ErrorKind};
+use redis::{from_redis_value, ErrorKind, FromRedisValue, RedisResult, Value};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Pool, Postgres};
 use std::borrow::Cow;
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{BTreeMap, HashMap};
 use std::env;
 use std::ffi::OsStr;
 use std::fs::{self, File};
@@ -16,25 +23,19 @@ use std::path::Path;
 use std::sync::OnceLock;
 use std::thread::sleep;
 use std::time::{self, Instant};
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
 use std::{fmt::Debug, net::IpAddr};
 use struct_iterable::Iterable;
 use validator::{Validate, ValidationError, ValidationErrors};
-use std::{collections::hash_map::DefaultHasher, hash::{Hash, Hasher}};
-use axum::{
-    extract::{Request, Json, Extension, Query},
-    routing::post,
-    http::header::HeaderMap,
-    body::{Bytes, Body},
-    Router,
-};
 
 pub fn config() -> &'static Config {
     static INSTANCE: OnceLock<Config> = OnceLock::new();
 
     INSTANCE.get_or_init(|| {
-        Config::load_from_env().unwrap_or_else(|ex| {
-            panic!("Error Loading Config => {ex:?}")
-        })
+        Config::load_from_env().unwrap_or_else(|ex| panic!("Error Loading Config => {ex:?}"))
     })
 }
 
@@ -144,7 +145,7 @@ impl From<&extract::Query<FilterOptions>> for FilterOptions {
             page: Some(web_opts.page.unwrap_or(1)),
             limit: web_opts.limit,
             year: web_opts.year,
-            month: web_opts.month
+            month: web_opts.month,
         }
     }
 }
@@ -157,15 +158,15 @@ pub struct SelectOption {
 
 #[derive(Debug, Validate, Serialize, FromRow, Clone, Deserialize)]
 pub struct SelectOptionsVec {
-    pub vec: Vec<SelectOption>
+    pub vec: Vec<SelectOption>,
 }
 
 impl FromRedisValue for SelectOptionsVec {
     fn from_redis_value(v: &Value) -> RedisResult<Self> {
         let v: String = from_redis_value(v)?;
         let result: Self = match serde_json::from_str::<Self>(&v) {
-          Ok(v) => v,
-          Err(_err) => return Err((ErrorKind::TypeError, "Parse to JSON Failed").into())
+            Ok(v) => v,
+            Err(_err) => return Err((ErrorKind::TypeError, "Parse to JSON Failed").into()),
         };
         Ok(result)
     }
@@ -185,8 +186,8 @@ impl FromRedisValue for SelectOption {
     fn from_redis_value(v: &Value) -> RedisResult<Self> {
         let v: String = from_redis_value(v)?;
         let result: Self = match serde_json::from_str::<Self>(&v) {
-          Ok(v) => v,
-          Err(_err) => return Err((ErrorKind::TypeError, "Parse to JSON Failed").into())
+            Ok(v) => v,
+            Err(_err) => return Err((ErrorKind::TypeError, "Parse to JSON Failed").into()),
         };
         Ok(result)
     }
@@ -199,10 +200,13 @@ pub struct StringSelectOption {
 }
 
 impl StringSelectOption {
-    fn new<S>(value: S, key: S) -> StringSelectOption where S: Into<String> {
-        StringSelectOption { 
+    fn new<S>(value: S, key: S) -> StringSelectOption
+    where
+        S: Into<String>,
+    {
+        StringSelectOption {
             value: value.into(),
-            key: key.into() 
+            key: key.into(),
         }
     }
 }
@@ -293,17 +297,11 @@ pub async fn get_state_options(pool: &Pool<Postgres>) -> Vec<StringSelectOption>
     {
         Ok(state_list) => state_list
             .iter()
-            .map(|state| StringSelectOption::new(
-                &state.state_name,
-                &state.state_name,
-            ))
+            .map(|state| StringSelectOption::new(&state.state_name, &state.state_name))
             .collect::<Vec<StringSelectOption>>(),
         Err(err) => {
             dbg!(&err);
-            vec![StringSelectOption::new(
-                "Select One",
-                "Select One",
-            )]
+            vec![StringSelectOption::new("Select One", "Select One")]
         }
     }
 }

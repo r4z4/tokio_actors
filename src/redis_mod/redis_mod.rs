@@ -1,13 +1,16 @@
 use chrono::{DateTime, Utc};
+use deadpool_redis::{redis::cmd, Config, Connection, Pool, Runtime};
 use dotenv::dotenv;
 use futures_util::StreamExt;
-use redis::{from_redis_value, AsyncCommands, Client, Commands, ControlFlow, ErrorKind, FromRedisValue, Msg, PubSub, PubSubCommands, RedisError, RedisResult, RedisWrite, ToRedisArgs, Value};
+use redis::{
+    from_redis_value, AsyncCommands, Client, Commands, ControlFlow, ErrorKind, FromRedisValue, Msg,
+    PubSub, PubSubCommands, RedisError, RedisResult, RedisWrite, ToRedisArgs, Value,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
-use std::{collections::BTreeMap, env, sync::Arc, thread, time::Duration, ops::Deref};
-use deadpool_redis::{redis::{cmd}, Config, Runtime, Pool, Connection};
+use std::{collections::BTreeMap, env, ops::Deref, sync::Arc, thread, time::Duration};
 
-use crate::redis_mod::{redis_subscriber::subscribe, redis_publisher::publish};
+use crate::redis_mod::{redis_publisher::publish, redis_subscriber::subscribe};
 
 pub trait RedisState {
     fn client(&self) -> &Arc<Client>;
@@ -29,7 +32,7 @@ impl Message {
         Message {
             id: Message::generate_id(),
             channel: String::from("order"),
-            payload
+            payload,
         }
     }
     fn generate_id() -> String {
@@ -54,8 +57,8 @@ impl FromRedisValue for PubSubMsg {
     fn from_redis_value(v: &Value) -> RedisResult<Self> {
         let v: String = from_redis_value(v)?;
         let result: Self = match serde_json::from_str::<Self>(&v) {
-          Ok(v) => v,
-          Err(_err) => return Err((ErrorKind::TypeError, "Parse to JSON Failed").into())
+            Ok(v) => v,
+            Err(_err) => return Err((ErrorKind::TypeError, "Parse to JSON Failed").into()),
         };
         Ok(result)
     }
@@ -125,7 +128,8 @@ pub async fn set_int(
     cmd("SET")
         .arg(&["deadpool/test_key", "42"])
         .query_async::<_, ()>(con)
-        .await.unwrap();
+        .await
+        .unwrap();
     Ok(())
 }
 
@@ -146,7 +150,7 @@ pub fn redis_client() -> Result<Client, RedisError> {
     let client = Client::open(redis_conn_url.clone()).unwrap();
     // let mut con = client.get_connection()?;
     // let mut pubsub = con.as_pubsub();
-    return Ok::<Client, RedisError>(client)
+    return Ok::<Client, RedisError>(client);
 }
 
 pub fn redis_url() -> String {
@@ -163,7 +167,7 @@ pub fn redis_url() -> String {
             .unwrap_or("NoURL".to_string()),
     );
     let redis_conn_url = format!("redis://:{}@{}:6379", redis_password, redis_host_name);
-    return redis_conn_url
+    return redis_conn_url;
 }
 
 pub fn redis_connect() -> Pool {
@@ -270,14 +274,14 @@ pub async fn redis_test_data(pool: &Pool) -> () {
 
     // loop {
     //     let mut msg = pubsub.get_message();
-    //     let (payload, channel) = 
+    //     let (payload, channel) =
     //         if msg.is_ok() {
     //             let uw = msg.unwrap();
     //             (uw.get_payload().unwrap(), String::from(uw.get_channel_name()))
     //         } else {
     //             (String::from("No payload"), String::from("No channel"))
     //         };
-        
+
     //     println!("channel '{}': {}", channel, payload);
     // }
 }

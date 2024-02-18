@@ -1,7 +1,7 @@
-use std::{thread, time::Duration, sync::Arc};
+use super::redis_mod::{PubSubMsg, RedisState};
 use chrono::Utc;
 use redis::Commands;
-use super::redis_mod::{RedisState, PubSubMsg};
+use std::{sync::Arc, thread, time::Duration};
 
 pub fn publish(state: &impl RedisState) {
     let client = Arc::clone(state.client());

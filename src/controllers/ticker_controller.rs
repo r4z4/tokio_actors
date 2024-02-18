@@ -1,20 +1,24 @@
 use std::collections::HashMap;
 
+use crate::{
+    actors::actor::{ActorHandle, ActorMessage},
+    error::AppError,
+    models::{self, offer::Offer},
+};
 use askama::Template;
 use askama_axum::IntoResponse;
-use axum::{Extension, Json, response::Response, debug_handler};
-use futures_util::{StreamExt, SinkExt};
+use axum::{debug_handler, response::Response, Extension, Json};
 use futures_util::stream::SplitStream;
+use futures_util::{SinkExt, StreamExt};
 use hyper::StatusCode;
 use reqwest::header::HeaderMap;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::oneshot;
 use tokio::time::{sleep, Duration};
-use tokio_tungstenite::{connect_async, WebSocketStream};
 use tokio_tungstenite::tungstenite::Message;
-use crate::{error::AppError, models::{self, offer::Offer}, actors::actor::{ActorHandle, ActorMessage}};
+use tokio_tungstenite::{connect_async, WebSocketStream};
 
 #[derive(Debug)]
 pub struct TickerTemplate {
@@ -39,45 +43,74 @@ pub async fn get_ticker(
 
     let read_handle = tokio::spawn(handle_incoming_messages(read));
 
-    let subscribe_msg = Message::Text(json!({
-        "event": "subscribe",
-        "pair": ["XBT/USD"],
-        "subscription": json!({"name": "*"})
-      }).to_string());
+    let subscribe_msg = Message::Text(
+        json!({
+          "event": "subscribe",
+          "pair": ["XBT/USD"],
+          "subscription": json!({"name": "*"})
+        })
+        .to_string(),
+    );
     println!("Sending message - {}", subscribe_msg);
-    write.send(subscribe_msg).await.expect("Failed to send message");
-    
+    write
+        .send(subscribe_msg)
+        .await
+        .expect("Failed to send message");
+
     // let _ = tokio::try_join!(read_handle);
     sleep(Duration::from_millis(3000)).await;
     let _ = tokio::try_join!(read_handle);
-    TickerTemplate {text: "Hi".to_owned()}.into_response()
-
+    TickerTemplate {
+        text: "Hi".to_owned(),
+    }
+    .into_response()
 }
 
-async fn handle_message(mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>) -> impl IntoResponse {
+async fn handle_message(
+    mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>,
+) -> impl IntoResponse {
     while let Some(message) = read.next().await {
         match message {
-            Ok(msg) => TickerTemplate {text: msg.to_string()}.into_response(),
-            Err(e) => TickerTemplate {text: e.to_string()}.into_response(),
+            Ok(msg) => TickerTemplate {
+                text: msg.to_string(),
+            }
+            .into_response(),
+            Err(e) => TickerTemplate {
+                text: e.to_string(),
+            }
+            .into_response(),
         };
     }
 }
 
-async fn handle_message_template(mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>) -> axum::response::Response {
+async fn handle_message_template(
+    mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>,
+) -> axum::response::Response {
     while let Some(message) = read.next().await {
         match message {
             Ok(msg) => {
-                return TickerTemplate {text: msg.to_string()}.into_response()
-            },
+                return TickerTemplate {
+                    text: msg.to_string(),
+                }
+                .into_response()
+            }
             Err(e) => {
-                return TickerTemplate {text: e.to_string()}.into_response()
-            },
+                return TickerTemplate {
+                    text: e.to_string(),
+                }
+                .into_response()
+            }
         }
     }
-    TickerTemplate {text: "Error".to_string()}.into_response()
+    TickerTemplate {
+        text: "Error".to_string(),
+    }
+    .into_response()
 }
 
-async fn handle_incoming_messages(mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>) {
+async fn handle_incoming_messages(
+    mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>,
+) {
     while let Some(message) = read.next().await {
         match message {
             Ok(msg) => println!("Received a message: {}", msg),
