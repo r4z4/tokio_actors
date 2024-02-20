@@ -172,19 +172,17 @@ mod get {
         let events = ["new_offer", "new_event"];
 
         Sse::new(try_stream! {
-            loop {
-                match offer_rx.recv().await {
-                    Ok(i) => {
-                        let event = Event::default()
-                            .event(events[rand::thread_rng().gen_range(0..events.len())])
-                            .data(i.terms.to_string());
+            match offer_rx.recv().await {
+                Ok(i) => {
+                    let event = Event::default()
+                        .event(events[rand::thread_rng().gen_range(0..events.len())])
+                        .data(i.terms.to_string());
 
-                        yield event;
-                    },
+                    yield event;
+                },
 
-                    Err(e) => {
-                        tracing::error!(error = ?e, "Failed to get");
-                    }
+                Err(e) => {
+                    tracing::error!(error = ?e, "Failed to get");
                 }
             }
         })
