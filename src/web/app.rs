@@ -76,6 +76,7 @@ use tower_http::{
     services::ServeDir,
 };
 use tracing::{info, Level};
+use casbin::prelude::*;
 
 // mod errors;
 // mod handlers;
@@ -88,8 +89,9 @@ pub struct AppState {
     actor_handle: ActorHandle,
 }
 
-#[derive(Debug)]
+#[derive()]
 pub struct SharedState {
+    pub enforcer: Enforcer,
     pub offer_tx: Option<broadcast::Sender<Offer>>,
     pub offer_rx: Option<broadcast::Receiver<Offer>>,
     pub name: Option<String>,
@@ -133,9 +135,8 @@ pub struct PostTemplate<'a> {
 // }
 
 impl App {
-    pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn new() -> core::result::Result<Self, Box<dyn std::error::Error>> {
         dotenv::dotenv().ok();
-
         // let db_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
         // let pool = PgPoolOptions::new()
         //     .max_connections(5)
@@ -143,7 +144,7 @@ impl App {
         //     .connect(&db_url)
         //     .await
         //     .expect("Unable to connect to DB");
-        // sqlx::migrate!().run(&pool).await?;
+        // sqlx::migrate!().run(&pool).await?;  
         let pool = new_db_pool().await?;
         let r_pool = redis_connect();
         let current_user = None::<CurrentUser>;
@@ -151,7 +152,7 @@ impl App {
         Ok(Self { pool, r_pool })
     }
 
-    pub async fn serve(self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn serve(self) -> core::result::Result<(), Box<dyn std::error::Error>> {
         // println!("Serve");
         // let cors = CorsLayer::new().allow_origin(Any);
 
@@ -324,9 +325,15 @@ impl App {
         };
         let _ = actor_handle.sender.send(msg).await;
 
+        // Not thread safe. Need RWLock
+        let mut e = Enforcer::new("assets/rbac_with_domains_model.conf", "assets/rbac_with_domains_policy.csv").await?;
+        e.enable_log(true);
+        e.enforce(("alice", "domain1", "data1", "read"))?;
+
         // let state = AppState { name: None, actor_handle: actor_handle.clone() };
 
         let state = Arc::new(Mutex::new(SharedState {
+            enforcer: e,
             name: None,
             actor_handle: actor_handle.clone(),
             offer_tx: None,
