@@ -7,6 +7,8 @@ use async_stream::try_stream;
 use axum::response::sse::{Event, Sse};
 use axum::{debug_handler, http::StatusCode, response::IntoResponse, routing::get, Router};
 use axum_extra::{headers, TypedHeader};
+use serde::Deserialize;
+use sqlx::FromRow;
 use tokio_metrics::RuntimeMetrics;
 use std::sync::Mutex;
 
@@ -28,6 +30,11 @@ pub struct DumpTemplate<'a> {
     pub metrics: &'a RuntimeMetrics,
 }
 
+#[derive(Debug, Deserialize, FromRow)]
+pub struct EmbeddingPostResponse {
+    pub id: i32,
+}
+
 pub fn router() -> Router<Arc<Mutex<SharedState>>> {
     Router::new()
         .route("/", get(self::get::protected))
@@ -44,6 +51,7 @@ mod get {
     use futures_util::{stream, Stream, StreamExt};
     use rand::{distributions::Alphanumeric, Rng};
     use fastembed::{TextEmbedding, InitOptions, EmbeddingModel};
+    use sqlx::PgPool;
     use tokio::{
         spawn,
         sync::{broadcast, mpsc, oneshot},
@@ -89,7 +97,7 @@ mod get {
         }
     }
 
-    pub async fn trigger_call(State(state): State<Arc<Mutex<SharedState>>>) -> () {
+    pub async fn trigger_call(State(state): State<Arc<Mutex<SharedState>>>, Extension(pool): Extension<PgPool>) -> () {
         let offer_handle = ActorHandle::new();
         let (send, recv) = oneshot::channel();
         let offer_msg = ActorMessage::PopulateDB {
@@ -124,6 +132,25 @@ mod get {
         println!("Embeddings length: {}", embeddings.len()); // -> Embeddings length: 4
         println!("Embedding dimension: {}", embeddings[0].len()); 
 
+        // Save one to DB
+        match sqlx::query_as::<_, EmbeddingPostResponse>(
+            "INSERT INTO items (embedding) 
+                    VALUES ($1) RETURNING id",
+        )
+        .bind(&embeddings[0])
+        .fetch_one(&pool)
+        .await
+        {
+            Ok(app) => {
+                // return (StatusCode::CREATED, ApplyOffersTemplate { message: "Hey" }).into_response()
+                dbg!(app);
+            }
+            Err(err) => {
+                dbg!(&err);
+                // let user_alert = UserAlert::from((format!("Error adding location: {:?}", err).as_str(), "alert_error"));
+                // return StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
+        }
         let _ = offer_handle.sender.send(offer_msg).await;
         // let _ = offer_handle.sender.send(offer_loop_msg).await;
         // state.lock().unwrap().offer_tx.send(rand::thread_rng().sample_iter(&Alphanumeric).take(5).map(char::from).collect::<String>());

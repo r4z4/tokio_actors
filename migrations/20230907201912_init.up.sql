@@ -3,7 +3,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS vector;
 --DROP TABLE IF EXISTS accounts;
 DROP TYPE IF EXISTS user_type;
 DROP TYPE IF EXISTS specialty;
@@ -44,7 +44,7 @@ DROP TYPE IF EXISTS mime_type;
 --        'admin'
 -- );
 
--- CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(384));
+CREATE TABLE items (id bigserial PRIMARY KEY, embedding vector(384));
 
 CREATE TABLE IF NOT EXISTS accounts (
         account_id SERIAL PRIMARY KEY,
