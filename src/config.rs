@@ -290,6 +290,12 @@ pub struct State {
     state_name: String,
 }
 
+#[derive(Serialize, Validate, FromRow, Deserialize, Debug, Default, Clone)]
+pub struct EntryType {
+    entry_type_name: String,
+    entry_type_id: i32,
+}
+
 pub async fn get_state_options(pool: &Pool<Postgres>) -> Vec<StringSelectOption> {
     match sqlx::query_as::<_, State>("SELECT state_name FROM states")
         .fetch_all(pool)
@@ -302,6 +308,22 @@ pub async fn get_state_options(pool: &Pool<Postgres>) -> Vec<StringSelectOption>
         Err(err) => {
             dbg!(&err);
             vec![StringSelectOption::new("Select One", "Select One")]
+        }
+    }
+}
+
+pub async fn get_entry_type_options(pool: &Pool<Postgres>) -> Vec<SelectOption> {
+    match sqlx::query_as::<_, EntryType>("SELECT entry_type_name FROM entry_type")
+        .fetch_all(pool)
+        .await
+    {
+        Ok(entry_type_list) => entry_type_list
+            .iter()
+            .map(|entry_type| SelectOption::from((entry_type.entry_type_id, entry_type.entry_type_name.clone())))
+            .collect::<Vec<SelectOption>>(),
+        Err(err) => {
+            dbg!(&err);
+            vec![SelectOption::from((1, "Select One".to_owned()))]
         }
     }
 }

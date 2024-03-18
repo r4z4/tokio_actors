@@ -27,7 +27,9 @@ use super::SharedState;
 pub fn router() -> Router<Arc<Mutex<SharedState>>> {
     Router::new()
         .route("/application", get(self::get::get_application))
+        .route("/writing_sample", get(self::get::get_writing_sample_form))
         .route("/apply", post(self::post::apply))
+        .route("/submit_sample", post(self::post::submit_sample))
         .route("/offer-score", get(self::get::offer_score))
 }
 
@@ -90,8 +92,20 @@ mod post {
         pub emp_length: i32,
     }
 
+    #[derive(Debug, Deserialize, Validate)]
+    pub struct WritingSampleInput {
+        pub entry_type_id: i32,
+        pub entry_name: String,
+        pub writing_sample: String,
+    }
+
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
+
+    #[derive(Debug, FromRow)]
+    pub struct WritingSamplePostResponse {
+        pub writing_sample_id: i32,
+    }
 
     #[derive(Hash)]
     struct SsnToNacl {
@@ -236,6 +250,83 @@ mod post {
         //     Redirect::to("/").into_response()
         // }
     }
+
+    #[debug_handler]
+    pub async fn submit_sample(
+        mut auth_session: AuthSession,
+        State(state): State<Arc<Mutex<SharedState>>>,
+        Extension(pool): Extension<PgPool>,
+        Form(writing_sample): Form<WritingSampleInput>,
+    ) -> impl IntoResponse {
+        match auth_session.user {
+            Some(user) => {
+                let current_user = CurrentUser::new(&user.username, &user.email);
+                let is_valid = writing_sample.validate();
+                if is_valid.is_err() {
+                    let validation_response = get_validation_response(is_valid);
+                    let mut headers = HeaderMap::new();
+                    headers.insert("HX-Retarget", "#application_errors".parse().unwrap());
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        headers,
+                        FormValidationTemplate {
+                            form_response: validation_response,
+                        },
+                    )
+                        .into_response();
+                } else {
+                    let app_slug = Uuid::new_v4().simple().to_string();
+                    // Generate embeddings here
+                    match sqlx::query_as::<_, WritingSamplePostResponse>(
+                        "INSERT INTO writing_samples (user_id, entry_name, entry_type_id, writing_sample) 
+                                VALUES ($1, $2, $3, $4) RETURNING writing_sample_id",
+                    )
+                    .bind(current_user.username)
+                    .bind(&writing_sample.entry_name)
+                    .bind(&writing_sample.entry_type_id)
+                    .bind(&writing_sample.writing_sample)
+                    .fetch_one(&pool)
+                    .await
+                    {
+                        Ok(writing_sample_res) => {
+                            dbg!(writing_sample_res.writing_sample_id);
+                            let user_alert = UserAlert::from((format!("Location added successfully: ID #{:?}", writing_sample_res.writing_sample_id).as_str(), "alert_success"));
+                            let template_data = json!({
+                                "user_alert": user_alert,
+                                "user": user,
+                            });
+
+                            // return OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
+                            // Make this an embedding task
+                            // let _ = tokio::task::Builder::new().name("comp_offer_task").spawn(async move {
+                            //     sleep(Duration::from_millis(5000)).await;
+                            //     let comp_offer = get_comp_offer(app);
+                            //     // Find comp record in credit file CSV and use that to decision on
+                            //     // Get Id form that, then look at load CSV with that ID and see if in good shape.
+                            //     // If so, give offer. If not, decline.
+                            //     state.lock().unwrap().offer_tx.clone().unwrap().send(comp_offer);
+                            // });
+                            return (StatusCode::CREATED, ApplyOffersTemplate { message: "Hey" }).into_response()
+                        }
+                        Err(err) => {
+                            dbg!(&err);
+                            let user_alert = UserAlert::from((format!("Error adding location: {:?}", err).as_str(), "alert_error"));
+                            return StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                        }
+                    }
+                }
+                // OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
+            }
+
+            None => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+
+        // if let Some(ref next) = creds.next {
+        //     Redirect::to(next).into_response()
+        // } else {
+        //     Redirect::to("/").into_response()
+        // }
+    }
 }
 
 mod get {
@@ -258,7 +349,7 @@ mod get {
     };
 
     use crate::{
-        config::get_state_options,
+        config::{get_entry_type_options, get_state_options, FormErrorResponse, SelectOption},
         error::AppError,
         models::{
             self,
@@ -302,6 +393,61 @@ mod get {
         match users {
             // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
             Ok(users) => ApplicationTemplate::example(current_user, state_options).into_response(),
+            Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response(),
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct WritingSample<'a> {
+        pub entry_name: &'a str,
+        pub entry_type_id: i32,
+        pub writing_sample: &'a str,
+    }
+    // FIXME: Move to own module
+    #[derive(Debug, Template)]
+    #[template(path = "writing_sample.html")]
+    pub struct WritingSampleTemplate<'a> {
+        pub user: Option<CurrentUser>,
+        pub message: Option<String>,
+        pub validation_errors: FormErrorResponse,
+        pub entry_type_options: Vec<SelectOption>,
+        pub entity: Option<WritingSample<'a>>,
+    }
+
+    #[debug_handler]
+    pub async fn get_writing_sample_form(
+        State(state): State<Arc<Mutex<SharedState>>>,
+        ConnectInfo(addr): ConnectInfo<SocketAddr>,
+        Query(params): Query<HashMap<String, String>>,
+        auth_session: AuthSession,
+        Extension(pool): Extension<PgPool>,
+    ) -> Response {
+        // let msg = ActorMessage::RegularMessage { text: "Hey from get_users()".to_owned() };
+        // let _ = state.lock().unwrap().actor_handle.sender.send(msg).await;
+
+        let users = sqlx::query_as::<_, models::auth::User>(
+            "SELECT user_id, email, username, created_at, updated_at FROM users;",
+        )
+        .fetch_all(&pool)
+        .await
+        .map_err(|err| {
+            dbg!(err);
+            AppError::InternalServerError
+        });
+
+        let entry_type_options = get_entry_type_options(&pool).await;
+
+        let current_user = match auth_session.user {
+            Some(user) => Some(CurrentUser {
+                username: user.username,
+                email: user.email,
+            }),
+            _ => None,
+        };
+
+        match users {
+            // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
+            Ok(users) => WritingSampleTemplate{ message: None, entity: None, validation_errors: FormErrorResponse{errors: None}, user: current_user, entry_type_options: entry_type_options}.into_response(),
             Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response(),
         }
     }

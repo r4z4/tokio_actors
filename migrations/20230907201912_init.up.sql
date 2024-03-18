@@ -167,6 +167,11 @@ CREATE TABLE IF NOT EXISTS user_types (
         user_type_name TEXT NOT NULL UNIQUE
     );
 
+CREATE TABLE IF NOT EXISTS entry_types (
+        entry_type_id SERIAL PRIMARY KEY,
+        entry_type_name TEXT NOT NULL UNIQUE
+    );
+
 CREATE TABLE IF NOT EXISTS article_categories (
         category_id SERIAL PRIMARY KEY,
         category_name TEXT NOT NULL UNIQUE
@@ -179,6 +184,23 @@ CREATE TABLE IF NOT EXISTS territories (
         territory_states TEXT[] NULL
     );
 
+CREATE TABLE IF NOT EXISTS writing_samples (
+    writing_sample_id SERIAL PRIMARY KEY,
+    user_id
+    entry_name TEXT NULL,
+    entry_type_id TEXT NOT NULL,
+    writing_sample TEXT NULL,
+    -- 384 Dimensions for model BAAI/bge-small-en-v1.5. Default model for FastEmbed.
+    embedding vector(384),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NULL,
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+            REFERENCES users(user_id),
+    CONSTRAINT fk_entry_type
+        FOREIGN KEY(entry_type_id) 
+            REFERENCES entry_types(entry_type_id)
+);
 CREATE TABLE IF NOT EXISTS contacts (
     contact_id SERIAL PRIMARY KEY,
     contact_title TEXT NULL,
@@ -433,6 +455,14 @@ VALUES
 (2, 'subadmin'),
 (3, 'regular'),
 (4, 'guest');
+
+INSERT INTO entry_types (entry_type_id, entry_type_name)
+VALUES
+(1, 'sentence'),
+(2, 'short_burst'),
+(3, 'paragraph'),
+(4, 'essay'),
+(5, 'story');
 
 INSERT INTO entities (entity_id, entity_name)
 VALUES

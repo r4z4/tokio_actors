@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{# Only require nav elements on semi-base or base templates #}
+{% block nav %}
+  {% include "nav.html" %}
+{% endblock %}
+
+{% block content %}
+  {% if let Some(message) = message %}
+  <span><strong>{{ message }}</strong></span>
+  {% endif %}
+<div id="writing_sample_form">
+  <h1 class="main_header">Writing Sample</h1>
+  <div class="form-style">
+    {% if let Some(entity) = entity %}
+      <h2 id="writing_sample_form_header" class="text-center">Edit Sample</h2>
+    {% else %}
+      <h2 id="writing_sample_form_header" class="text-center">New Sample</h2> 
+    {% endif %}
+    <div id="writing_sample_errors"></div>
+    <form 
+      hx-boost="true"
+        action="/submit_sample" 
+        method="post"
+        hx-target="#writing_sample_form"
+        hx-push-url="/apply/offers"
+        hx-target-400="#writing_sample_errors"
+        hx-target-404="#writing_sample_errors"
+        hx-target-4*="#writing_sample_errors"
+        hx-headers='{"Content-Type": "multipart/form-data"}'
+        hx-swap="innerHTML"
+    >
+
+    {% include "form/sample_entry.html" %}
+    <p>Or you may upload you entry (.doc, .txt)</p>
+    {% include "form/upload.html" %}
+
+    <li>
+      <div>
+        <button class="field-style field-split align-left submit_button" type="reset">Clear Form</button>
+        <button class="field-style field-split align-right submit_button" type="submit">Submit</button>
+      </div>
+    </li>
+
+    </form>
+  </div>
+</div>
+
+<div hx-sse="connect:/sse">
+  <div hx-sse="swap:new_offer">
+    Data specific to new_offer to be swapped
+  </div>
+  <div hx-sse="swap:message">
+    Just any old normal data to be swapped
+  </div>
+  <div hx-sse="swap:new_event">
+    Data specific to new_event to be swapped
+  </div>
+</div>
+  {% call super() %}
+{% endblock %}
