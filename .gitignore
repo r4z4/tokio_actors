@@ -2,3 +2,5 @@
 .env
 
 /assets/data*
+
+.fastembed_cache/*
