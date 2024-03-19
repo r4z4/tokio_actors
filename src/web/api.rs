@@ -20,7 +20,7 @@ use axum_extra::{headers, TypedHeader};
 use serde::Deserialize;
 use sqlx::FromRow;
 use std::sync::Mutex;
-
+use pgvector::Vector;
 use super::AppState;
 use super::SharedState;
 
@@ -64,7 +64,7 @@ mod post {
     use validator::Validate;
 
     use crate::{
-        actors::actor::{aggregate_offers, mock_offer, ActorHandle, ActorMessage},
+        actors::actor::{aggregate_offers, mock_offer, ActorHandle, ActorMessage, EmbeddingSimilarsResponse},
         config::{get_validation_response, FormErrorResponse, UserAlert},
         controllers::offer_controller::OffersTemplate,
     };
@@ -297,15 +297,38 @@ mod post {
                     // Generate embeddings with the default batch size, 256
                     let embeddings_res = model.embed(documents, None);
                     let embeddings = embeddings_res.unwrap();
-                    let offer_handle = ActorHandle::new();
-                    let (send, recv) = oneshot::channel::<ActorMessage>();
-                    let offer_msg = ActorMessage::FetchSimilars {
-                        respond_to: Some(send),
-                        embeddings: Some(embeddings.clone()),
-                        similars: None,
-                        pool: Some(pool.clone()),
-                    };
-                    let _ = offer_handle.sender.send(offer_msg);
+                    // let offer_handle = ActorHandle::new();
+                    // let (send, recv) = oneshot::channel::<ActorMessage>();
+                    // let offer_msg = ActorMessage::FetchSimilars {
+                    //     respond_to: Some(send),
+                    //     embeddings: Some(embeddings.clone()),
+                    //     similars: None,
+                    //     pool: Some(pool.clone()),
+                    // };
+                    // let _ = offer_handle.sender.send(offer_msg);
+                    let first = embeddings[0].clone();
+                    let pool_c = pool.clone();
+                    let fetch = tokio::spawn(async move {
+                        use pgvector::Vector;
+                        let embedding = Vector::from(first);
+                        match sqlx::query_as::<_, EmbeddingSimilarsResponse>(
+                            "SELECT entry_name FROM writing_samples ORDER BY embedding <-> $1 LIMIT 5;",
+                        )
+                        .bind(embedding)
+                        .fetch_all(&pool_c)
+                        .await
+                        {
+                            Ok(entries) => {
+                                dbg!(&entries);
+                            }
+                            Err(err) => {
+                                dbg!(&err);
+                            }
+                        }
+                    });
+                    let one = &embeddings[0];
+                    let embedding2 = Vector::from(one.clone());
+                    // FIXME: Remove sub-select and add id to CurrentUser
                     match sqlx::query_as::<_, WritingSamplePostResponse>(
                         "INSERT INTO writing_samples (user_id, entry_name, entry_type_id, writing_sample, embedding) 
                                 VALUES ((SELECT user_id FROM users WHERE username = $1), $2, $3, $4, $5) RETURNING writing_sample_id",
@@ -314,7 +337,7 @@ mod post {
                     .bind(&writing_sample.entry_name)
                     .bind(&writing_sample.entry_type_id)
                     .bind(&writing_sample.writing_sample)
-                    .bind(&embeddings[0])
+                    .bind(embedding2)
                     .fetch_one(&pool)
                     .await
                     {
@@ -325,12 +348,9 @@ mod post {
                                 "user_alert": user_alert,
                                 "user": user,
                             });
-
-                            match recv.await {
-                                Ok(v) => return (StatusCode::CREATED, WritingSampleThankYouTemplate { message: "Hey" }).into_response(),
-                                Err(_) => return (StatusCode::CREATED, WritingSampleThankYouTemplate { message: "Oops" }).into_response()
-                            }
-                            
+                            let results = fetch.await;
+                            dbg!(results);
+                            return (StatusCode::CREATED, WritingSampleThankYouTemplate { message: "Hey" }).into_response()
                         }
                         Err(err) => {
                             dbg!(&err);
