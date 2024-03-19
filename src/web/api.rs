@@ -125,6 +125,7 @@ mod post {
     #[template(path = "writing_sample_thank_you.html")]
     struct WritingSampleThankYouTemplate<'a> {
         pub message: &'a str,
+        pub results: &'a Vec<EmbeddingSimilarsResponse>,
     }
 
     #[derive(Debug, Template)]
@@ -312,7 +313,7 @@ mod post {
                         use pgvector::Vector;
                         let embedding = Vector::from(first);
                         match sqlx::query_as::<_, EmbeddingSimilarsResponse>(
-                            "SELECT entry_name FROM writing_samples ORDER BY embedding <-> $1 LIMIT 5;",
+                            "SELECT entry_name, entry_type_id, writing_sample FROM writing_samples ORDER BY embedding <-> $1 LIMIT 5;",
                         )
                         .bind(embedding)
                         .fetch_all(&pool_c)
@@ -320,9 +321,11 @@ mod post {
                         {
                             Ok(entries) => {
                                 dbg!(&entries);
+                                entries
                             }
                             Err(err) => {
                                 dbg!(&err);
+                                vec![]
                             }
                         }
                     });
@@ -349,8 +352,9 @@ mod post {
                                 "user": user,
                             });
                             let results = fetch.await;
-                            dbg!(results);
-                            return (StatusCode::CREATED, WritingSampleThankYouTemplate { message: "Hey" }).into_response()
+                            let cloned = results.unwrap().clone();
+                            dbg!(&cloned);
+                            return (StatusCode::CREATED, WritingSampleThankYouTemplate { message: "Hey", results: &cloned }).into_response()
                         }
                         Err(err) => {
                             dbg!(&err);

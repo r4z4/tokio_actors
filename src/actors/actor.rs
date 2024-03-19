@@ -121,9 +121,11 @@ pub struct ActorHandle {
     pub sender: mpsc::Sender<ActorMessage>,
 }
 
-#[derive(Debug, Deserialize, FromRow)]
+#[derive(Debug, Deserialize, FromRow, Clone)]
 pub struct EmbeddingSimilarsResponse {
     pub entry_name: String,
+    pub entry_type_id: i32,
+    pub writing_sample: String,
 }
 
 impl Actor {

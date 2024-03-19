@@ -2,4 +2,13 @@
     <h3>Thank you for submitting your sample. It looks great!</h3>
     <p>Upon first examination, your style appears to be similar to:</p>
     <p>But if you want please choose one of these options and we will scour our records and perform a more exhaustive search</p>
+    <div class="offers_template_offers">
+        <ul class="offer_list">
+            {% for result in results %}
+                <li>Entry Name: {{ result.entry_name }}</li>
+                <li>Entry Type: {{ result.entry_type_id }}</li>
+                <li>Entry: {{ result.writing_sample }}</li>
+            {% endfor %}
+        </ul>
+    </div>
 </div>
