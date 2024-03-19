@@ -50,6 +50,7 @@ mod post {
 
     use axum::{extract::State, http::HeaderMap, response::Redirect, Extension, Form};
     use chrono::NaiveDate;
+    use fastembed::TextEmbedding;
     use futures_util::{stream, Stream, StreamExt};
     use rand::{distributions::Alphanumeric, Rng};
     use serde::Deserialize;
@@ -57,13 +58,13 @@ mod post {
     use sqlx::{types::Uuid, FromRow, PgPool};
     use tokio::{
         spawn,
-        sync::{broadcast, mpsc},
+        sync::{broadcast, mpsc, oneshot},
         time::sleep,
     };
     use validator::Validate;
 
     use crate::{
-        actors::actor::{aggregate_offers, mock_offer},
+        actors::actor::{aggregate_offers, mock_offer, ActorHandle, ActorMessage},
         config::{get_validation_response, FormErrorResponse, UserAlert},
         controllers::offer_controller::OffersTemplate,
     };
@@ -118,6 +119,12 @@ mod post {
         let mut hasher = DefaultHasher::new();
         obj.hash(&mut hasher);
         hasher.finish()
+    }
+
+    #[derive(Debug, Template)]
+    #[template(path = "writing_sample_thank_you.html")]
+    struct WritingSampleThankYouTemplate<'a> {
+        pub message: &'a str,
     }
 
     #[derive(Debug, Template)]
@@ -275,38 +282,55 @@ mod post {
                     )
                         .into_response();
                 } else {
-                    let app_slug = Uuid::new_v4().simple().to_string();
+                    // tokio::spawn( async move {
+
+                    // })
+                    // Return an initial finding, and send out to save to DB and find_similars
                     // Generate embeddings here
+                    let model_res = TextEmbedding::try_new(Default::default());
+                    let model = model_res.unwrap();
+
+                    let documents = vec![
+                        &writing_sample.writing_sample
+                    ];
+            
+                    // Generate embeddings with the default batch size, 256
+                    let embeddings_res = model.embed(documents, None);
+                    let embeddings = embeddings_res.unwrap();
+                    let offer_handle = ActorHandle::new();
+                    let (send, recv) = oneshot::channel::<ActorMessage>();
+                    let offer_msg = ActorMessage::FetchSimilars {
+                        respond_to: Some(send),
+                        embeddings: Some(embeddings.clone()),
+                        similars: None,
+                        pool: Some(pool.clone()),
+                    };
+                    let _ = offer_handle.sender.send(offer_msg);
                     match sqlx::query_as::<_, WritingSamplePostResponse>(
-                        "INSERT INTO writing_samples (user_id, entry_name, entry_type_id, writing_sample) 
-                                VALUES ($1, $2, $3, $4) RETURNING writing_sample_id",
+                        "INSERT INTO writing_samples (user_id, entry_name, entry_type_id, writing_sample, embedding) 
+                                VALUES ((SELECT user_id FROM users WHERE username = $1), $2, $3, $4, $5) RETURNING writing_sample_id",
                     )
                     .bind(current_user.username)
                     .bind(&writing_sample.entry_name)
                     .bind(&writing_sample.entry_type_id)
                     .bind(&writing_sample.writing_sample)
+                    .bind(&embeddings[0])
                     .fetch_one(&pool)
                     .await
                     {
                         Ok(writing_sample_res) => {
                             dbg!(writing_sample_res.writing_sample_id);
-                            let user_alert = UserAlert::from((format!("Location added successfully: ID #{:?}", writing_sample_res.writing_sample_id).as_str(), "alert_success"));
+                            let user_alert = UserAlert::from((format!("Writing Sample added successfully: ID #{:?}", writing_sample_res.writing_sample_id).as_str(), "alert_success"));
                             let template_data = json!({
                                 "user_alert": user_alert,
                                 "user": user,
                             });
 
-                            // return OffersTemplate {offers: &offers, lc_offers: Some(lc_offers), message: None}.into_response()
-                            // Make this an embedding task
-                            // let _ = tokio::task::Builder::new().name("comp_offer_task").spawn(async move {
-                            //     sleep(Duration::from_millis(5000)).await;
-                            //     let comp_offer = get_comp_offer(app);
-                            //     // Find comp record in credit file CSV and use that to decision on
-                            //     // Get Id form that, then look at load CSV with that ID and see if in good shape.
-                            //     // If so, give offer. If not, decline.
-                            //     state.lock().unwrap().offer_tx.clone().unwrap().send(comp_offer);
-                            // });
-                            return (StatusCode::CREATED, ApplyOffersTemplate { message: "Hey" }).into_response()
+                            match recv.await {
+                                Ok(v) => return (StatusCode::CREATED, WritingSampleThankYouTemplate { message: "Hey" }).into_response(),
+                                Err(_) => return (StatusCode::CREATED, WritingSampleThankYouTemplate { message: "Oops" }).into_response()
+                            }
+                            
                         }
                         Err(err) => {
                             dbg!(&err);
@@ -436,6 +460,8 @@ mod get {
         });
 
         let entry_type_options = get_entry_type_options(&pool).await;
+
+        dbg!(&entry_type_options);
 
         let current_user = match auth_session.user {
             Some(user) => Some(CurrentUser {

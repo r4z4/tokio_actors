@@ -1,8 +1,10 @@
 use chrono::{Datelike, NaiveDate, Utc};
 use csv::Reader;
+use fastembed::TextEmbedding;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use sqlx::{FromRow, PgPool};
 use std::collections::HashMap;
 use std::fmt;
 use std::{fs::File, io::Write};
@@ -42,6 +44,12 @@ pub enum ActorMessage {
     GetOffers {
         respond_to: Option<oneshot::Sender<ActorMessage>>,
         offers: Option<HashMap<i32, Vec<Offer>>>,
+    },
+    FetchSimilars {
+        respond_to: Option<oneshot::Sender<ActorMessage>>,
+        embeddings: Option<Vec<Vec<f32>>>,
+        similars: Option<Vec<EmbeddingSimilarsResponse>>,
+        pool: Option<PgPool>,
     },
     GetOffersMpsc {
         respond_to: Option<mpsc::Sender<ActorMessage>>,
@@ -111,6 +119,11 @@ pub fn mock_offer(servicer_id: i32) -> Offer {
 #[derive(Clone, Debug)]
 pub struct ActorHandle {
     pub sender: mpsc::Sender<ActorMessage>,
+}
+
+#[derive(Debug, Deserialize, FromRow)]
+pub struct EmbeddingSimilarsResponse {
+    pub entry_name: String,
 }
 
 impl Actor {
@@ -238,9 +251,42 @@ impl Actor {
                     .deserialize()
                     .map(|r| r.unwrap())
                     .collect::<Vec<CreditFile>>();
+
                 rows.iter()
                     .take(20)
                     .for_each(|r| println!("{:?} & {:?}", r.emp_title, r.months_since_last_delinq));
+            }
+            ActorMessage::FetchSimilars { respond_to, embeddings, similars, pool } => {
+                println!("fetch huh");
+                let emb = embeddings.unwrap();
+                let first = &emb[0];
+                // Save one to DB
+                match sqlx::query_as::<_, EmbeddingSimilarsResponse>(
+                    "SELECT entry_name FROM writing_sample ORDER BY embedding <-> $1 LIMIT 5;",
+                )
+                .bind(&first)
+                .fetch_all(&pool.unwrap())
+                .await
+                {
+                    Ok(entries) => {
+                        // return (StatusCode::CREATED, ApplyOffersTemplate { message: "Hey" }).into_response()
+                        dbg!(&entries);
+                        let actor_message = ActorMessage::FetchSimilars {
+                            respond_to: None,
+                            embeddings: None,
+                            pool: None,
+                            similars: Some(entries),
+                        };
+                        if let Some(sender) = respond_to {
+                            let _ = sender.send(actor_message);
+                        }
+                    }
+                    Err(err) => {
+                        dbg!(&err);
+                        // let user_alert = UserAlert::from((format!("Error adding location: {:?}", err).as_str(), "alert_error"));
+                        // return StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                    }
+                }
             }
         }
     }

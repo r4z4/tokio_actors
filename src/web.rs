@@ -2,7 +2,7 @@ pub use app::App;
 pub use app::AppState;
 pub use app::SharedState;
 
-mod api;
+pub mod api;
 mod app;
 mod auth;
 mod protected;

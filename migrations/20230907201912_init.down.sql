@@ -24,14 +24,15 @@ DROP TABLE IF EXISTS user_sessions;
 DROP TABLE IF EXISTS user_types;
 DROP TABLE IF EXISTS user_settings;
 DROP TABLE IF EXISTS user_details;
+DROP TABLE IF EXISTS writing_samples;
+DROP TABLE IF EXISTS entry_types;
 DROP TABLE IF EXISTS users;
 -- This needs to be last
 DROP TABLE IF EXISTS accounts;
+DROP TABLE IF EXISTS items;
 
 DROP TRIGGER IF EXISTS user_settings_insert_trigger ON users;
 DROP TRIGGER IF EXISTS new_app_notification ON applications;
-
-
 
 DROP TYPE IF EXISTS consultant_specialty;
 DROP TYPE IF EXISTS consultant_territory;

@@ -1,13 +1,15 @@
-<h4 class="form_heading">Loan Info</h4>
+{% include "form/form_error.html" %}
+
+<h4 class="form_heading">Sample Entry</h4>
 <ul>
     <li>
     {% match entity %}
         {% when Some with (entity) %}
-        <input type="text" class="field-style field-split align-left" name="entry_name" id="entry_name" pattern="[0-9]{0,6}" value="{{entity.entry_name}}" />
+        <input type="text" class="field-style field-split align-left" name="entry_name" id="entry_name" value="{{entity.entry_name}}" required />
         {% when None %}
-        <input type="text" class="field-style field-split align-left" name="entry_name" id="entry_name" pattern="[0-9]{0,6}" value="" />
+        <input type="text" class="field-style field-split align-left" name="entry_name" id="entry_name" value="" required />
     {% endmatch %}
-    <select class="field-style field-split align-right" id="entry_type" name="entry_type" value="" >
+    <select class="field-style field-split align-right" id="entry_type_id" name="entry_type_id" value="" required >
         {% for option in entry_type_options %}
             {% if let Some(entity) = entity %}
             {% if option.value == entity.entry_type_id %}
@@ -24,9 +26,9 @@
     <li>
         {% match entity %}
             {% when Some with (entity) %}
-            <input type="textarea" placeholder='Enter comment...' rows="5" cols="33" class="field-style" name="writing_sample" id="writing_sample" value="{{entity.writing_sample}}" />
+            <input type="textarea" placeholder='Enter comment...' rows="5" cols="33" class="field-style" name="writing_sample" id="writing_sample" value="{{entity.writing_sample}}" required/>
             {% when None %}
-            <input type="textarea" placeholder='Enter comment...' rows="5" cols="33" class="field-style" name="writing_sample" id="writing_sample" value="" />
+            <input type="textarea" placeholder='Enter comment...' rows="5" cols="33" class="field-style" name="writing_sample" id="writing_sample" value="" required />
         {% endmatch %}
     </li>
   </ul>

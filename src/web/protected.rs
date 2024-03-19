@@ -100,57 +100,13 @@ mod get {
     pub async fn trigger_call(State(state): State<Arc<Mutex<SharedState>>>, Extension(pool): Extension<PgPool>) -> () {
         let offer_handle = ActorHandle::new();
         let (send, recv) = oneshot::channel();
+
         let offer_msg = ActorMessage::PopulateDB {
             respond_to: Some(send),
             text: "".to_owned(),
         };
         // With default InitOptions
-        let model_res = TextEmbedding::try_new(Default::default());
 
-        // With custom InitOptions
-        // let model_res = TextEmbedding::try_new(InitOptions {
-        //     model_name: EmbeddingModel::AllMiniLML6V2,
-        //     show_download_progress: true,
-        //     ..Default::default()
-        // });
-
-        let model = model_res.unwrap();
-
-        let documents = vec![
-            "passage: Hello, World!",
-            "query: Hello, World!",
-            "passage: This is an example passage.",
-            // You can leave out the prefix but it's recommended
-            "fastembed-rs is licensed under Apache  2.0"
-        ];
-
-        // Generate embeddings with the default batch size, 256
-        let embeddings_res = model.embed(documents, None);
-
-        let embeddings = embeddings_res.unwrap();
-
-        println!("Embeddings length: {}", embeddings.len()); // -> Embeddings length: 4
-        println!("Embedding dimension: {}", embeddings[0].len()); 
-
-        // Save one to DB
-        match sqlx::query_as::<_, EmbeddingPostResponse>(
-            "INSERT INTO items (embedding) 
-                    VALUES ($1) RETURNING id",
-        )
-        .bind(&embeddings[0])
-        .fetch_one(&pool)
-        .await
-        {
-            Ok(app) => {
-                // return (StatusCode::CREATED, ApplyOffersTemplate { message: "Hey" }).into_response()
-                dbg!(app);
-            }
-            Err(err) => {
-                dbg!(&err);
-                // let user_alert = UserAlert::from((format!("Error adding location: {:?}", err).as_str(), "alert_error"));
-                // return StatusCode::INTERNAL_SERVER_ERROR.into_response()
-            }
-        }
         let _ = offer_handle.sender.send(offer_msg).await;
         // let _ = offer_handle.sender.send(offer_loop_msg).await;
         // state.lock().unwrap().offer_tx.send(rand::thread_rng().sample_iter(&Alphanumeric).take(5).map(char::from).collect::<String>());

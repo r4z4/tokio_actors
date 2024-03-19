@@ -25,7 +25,7 @@
         action="/submit_sample" 
         method="post"
         hx-target="#writing_sample_form"
-        hx-push-url="/apply/offers"
+        hx-push-url="/writing_sample"
         hx-target-400="#writing_sample_errors"
         hx-target-404="#writing_sample_errors"
         hx-target-4*="#writing_sample_errors"
@@ -34,8 +34,7 @@
     >
 
     {% include "form/sample_entry.html" %}
-    <p>Or you may upload you entry (.doc, .txt)</p>
-    {% include "form/upload.html" %}
+    <p>Or you may upload you entry below (.doc, .txt)</p>
 
     <li>
       <div>
@@ -46,18 +45,8 @@
 
     </form>
   </div>
+  {% include "form/upload.html" %}
 </div>
 
-<div hx-sse="connect:/sse">
-  <div hx-sse="swap:new_offer">
-    Data specific to new_offer to be swapped
-  </div>
-  <div hx-sse="swap:message">
-    Just any old normal data to be swapped
-  </div>
-  <div hx-sse="swap:new_event">
-    Data specific to new_event to be swapped
-  </div>
-</div>
   {% call super() %}
 {% endblock %}

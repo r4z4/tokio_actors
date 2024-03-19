@@ -313,7 +313,7 @@ pub async fn get_state_options(pool: &Pool<Postgres>) -> Vec<StringSelectOption>
 }
 
 pub async fn get_entry_type_options(pool: &Pool<Postgres>) -> Vec<SelectOption> {
-    match sqlx::query_as::<_, EntryType>("SELECT entry_type_name FROM entry_type")
+    match sqlx::query_as::<_, EntryType>("SELECT entry_type_id, entry_type_name FROM entry_types")
         .fetch_all(pool)
         .await
     {

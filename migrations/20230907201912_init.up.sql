@@ -186,9 +186,9 @@ CREATE TABLE IF NOT EXISTS territories (
 
 CREATE TABLE IF NOT EXISTS writing_samples (
     writing_sample_id SERIAL PRIMARY KEY,
-    user_id
+    user_id INTEGER NOT NULL,
     entry_name TEXT NULL,
-    entry_type_id TEXT NOT NULL,
+    entry_type_id INTEGER NOT NULL,
     writing_sample TEXT NULL,
     -- 384 Dimensions for model BAAI/bge-small-en-v1.5. Default model for FastEmbed.
     embedding vector(384),
