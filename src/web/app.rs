@@ -142,7 +142,21 @@ pub struct FamousEntry {
 }
 
 fn create_docs() -> Vec<&'static str> {
-    vec!["I ponder what youth may bring to the forefront.", "BAM! The pancakes were syrupy I tell ya.", "He doth not hath come again to the prospector's fair."]
+    // 2 of each
+    vec![
+        "Words have no power to impress the mind without the exquisite horror of their reality.",
+        "I became insane, with long intervals of horrible sanity.",
+        "We are all apprentices in a craft where no one ever becomes a master.", 
+        "The world breaks everyone, and afterward, many are strong at the broken places.",
+        "Maybe that's what life is... a wink of the eye and winking stars.",
+        "Because in the end, you won't remember the time you spent working in the office or mowing your lawn. Climb that goddamn mountain.",
+        "I don't want to repeat my innocence. I want the pleasure of losing it again.",
+        "I hope she'll be a fool -- that's the best thing a girl can be in this world, a beautiful little fool.",
+        "If you're in trouble, or hurt or need - go to the poor people. They're the only ones that'll help - the only ones.",
+        "I am impelled, not to squeak like a grateful and apologetic mouse, but to roar like a lion out of pride in my profession.",
+        "This above all: to thine own self be true, And it must follow, as the night the day, Thou canst not then be false to any man.",
+        "The fool doth think he is wise, but the wise man knows himself to be a fool."
+    ]
 }
 
 fn generate_embeddings(docs: &Vec<&'static str>) -> Vec<Vec<f32>> {
@@ -160,7 +174,16 @@ fn famous_entries() -> Vec<FamousEntry> {
     vec!{
         FamousEntry{author_id: 1, entry_type_id: 1, writing_sample: docs[0], embedding: embeddings[0].clone()},
         FamousEntry{author_id: 1, entry_type_id: 1, writing_sample: docs[1], embedding: embeddings[1].clone()},
-        FamousEntry{author_id: 1, entry_type_id: 1, writing_sample: docs[2], embedding: embeddings[2].clone()},
+        FamousEntry{author_id: 2, entry_type_id: 1, writing_sample: docs[2], embedding: embeddings[2].clone()},
+        FamousEntry{author_id: 2, entry_type_id: 1, writing_sample: docs[3], embedding: embeddings[3].clone()},
+        FamousEntry{author_id: 3, entry_type_id: 1, writing_sample: docs[4], embedding: embeddings[4].clone()},
+        FamousEntry{author_id: 3, entry_type_id: 1, writing_sample: docs[5], embedding: embeddings[5].clone()},
+        FamousEntry{author_id: 4, entry_type_id: 1, writing_sample: docs[6], embedding: embeddings[6].clone()},
+        FamousEntry{author_id: 4, entry_type_id: 1, writing_sample: docs[7], embedding: embeddings[7].clone()},
+        FamousEntry{author_id: 5, entry_type_id: 1, writing_sample: docs[8], embedding: embeddings[8].clone()},
+        FamousEntry{author_id: 5, entry_type_id: 1, writing_sample: docs[9], embedding: embeddings[9].clone()},
+        FamousEntry{author_id: 6, entry_type_id: 1, writing_sample: docs[10], embedding: embeddings[10].clone()},
+        FamousEntry{author_id: 6, entry_type_id: 1, writing_sample: docs[11], embedding: embeddings[11].clone()},
     }
 }
 
@@ -174,7 +197,7 @@ fn famous_entries() -> Vec<FamousEntry> {
 // }
 
 impl App {
-    pub async fn new() -> core::result::Result<Self, Box<dyn std::error::Error>> {
+    pub async fn new(run_migration: &str) -> core::result::Result<Self, Box<dyn std::error::Error>> {
         dotenv::dotenv().ok();
         // let db_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
         // let pool = PgPoolOptions::new()
@@ -187,14 +210,18 @@ impl App {
         let pool = new_db_pool().await?;
         let r_pool = redis_connect();
         let current_user = None::<CurrentUser>;
-        // Why am I not able to call this from a function?
-        let entries = famous_entries();
-        let mut query_builder = QueryBuilder::new("INSERT INTO famous_entries (author_id, entry_type_id, writing_sample, embedding) ");
-        query_builder.push_values(entries, |mut b, new_entry| {
-            b.push_bind(new_entry.author_id).push_bind(new_entry.entry_type_id).push_bind(new_entry.writing_sample).push_bind(new_entry.embedding);
-        });
-        let query = query_builder.build();
-        query.execute(&pool).await;
+        dbg!(&run_migration);
+        // To run, if need migrations, run: ```cargo run -- init_migration```
+        if run_migration == "init_migration" {
+            // Why am I not able to call this from a function?
+            let entries = famous_entries();
+            let mut query_builder = QueryBuilder::new("INSERT INTO famous_entries (author_id, entry_type_id, writing_sample, embedding) ");
+            query_builder.push_values(entries, |mut b, new_entry| {
+                b.push_bind(new_entry.author_id).push_bind(new_entry.entry_type_id).push_bind(new_entry.writing_sample).push_bind(new_entry.embedding);
+            });
+            let query = query_builder.build();
+            query.execute(&pool).await;
+        }
 
         Ok(Self { pool, r_pool })
     }
@@ -565,6 +592,7 @@ async fn get_users(
         Some(user) => Some(CurrentUser {
             username: user.username,
             email: user.email,
+            user_id: user.user_id,
         }),
         _ => None,
     };

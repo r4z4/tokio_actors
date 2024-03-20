@@ -1,4 +1,6 @@
-#![allow(unused)] // FIXME: Remove
+#![allow(unused)] use std::env;
+
+// FIXME: Remove
 use password_auth::generate_hash;
 use tower_http::services::ServeDir;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -18,6 +20,17 @@ mod redis_mod;
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 // async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args: Vec<String> = env::args().collect();
+    dbg!(&args);
+    // The program name takes up the first arg args[0]
+    let run_migration =
+        if args.len() > 1 {
+            &args[1]
+        } else {
+            let resp = "";
+            resp
+        };
+    dbg!(&run_migration);
     // Perform some initial migrations
     // FIXME: Move to Refinery SQL which allows .rs migrations
 
@@ -36,5 +49,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     .json()
     //     .init();
 
-    App::new().await?.serve().await
+    App::new(run_migration).await?.serve().await
 }

@@ -6,7 +6,7 @@ use sqlx::{FromRow, PgPool};
 
 #[derive(Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
-    user_id: i32,
+    pub user_id: i32,
     pub email: String,
     pub username: String,
     password: String,

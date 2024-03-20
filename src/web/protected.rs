@@ -71,6 +71,7 @@ mod get {
                 let current_user = CurrentUser {
                     username: user.username.clone(),
                     email: user.email,
+                    user_id: user.user_id,
                 };
                 ProtectedTemplate {
                     username: &user.username,

@@ -1,0 +1,17 @@
+{% block content %}
+  {% if let Some(message) = message %}
+  <span><strong>{{ message }}</strong></span>
+  {% endif %}
+  <h1 class="main_header">Famous Similars</h1>
+    <div class="offers_template_offers">
+        <ul class="offer_list">
+        {% for result in results %}
+            <li>
+                <p>Author: {{ result.author_id }}</p>
+                <p>Type: {{ result.entry_type_id }}</p>
+                <p>Entry: {{ result.writing_sample }}</p>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

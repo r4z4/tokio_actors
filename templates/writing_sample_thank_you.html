@@ -12,9 +12,22 @@
         </ul>
     </div>
     <div>
-        <button>Similar Styles</button>
+        <button
+            class="main_btn"
+            hx-get="/similars" 
+            hx-swap="innerHTML" 
+            hx-target="#similars_one" 
+            hx-trigger="click, click from:#get_all"
+        >
+            Similar Styles
+        </button>
         <button>Similar Themes</button>
         <button>Similar Structure</button>
         <button>Find Inspiration</button>
+    </div>
+
+    <div>
+        <div id="similars_one"></div>
+        <div id="similars_two"></div>
     </div>
 </div>

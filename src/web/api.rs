@@ -31,6 +31,7 @@ pub fn router() -> Router<Arc<Mutex<SharedState>>> {
         .route("/apply", post(self::post::apply))
         .route("/submit_sample", post(self::post::submit_sample))
         .route("/offer-score", get(self::get::offer_score))
+        .route("/similars", get(self::get::similars))
 }
 
 fn get_comp_offer(app: ApplicationPostResponse) -> Offer {
@@ -149,7 +150,7 @@ mod post {
     ) -> impl IntoResponse {
         match auth_session.user {
             Some(user) => {
-                let current_user = CurrentUser::new(&user.username, &user.email);
+                let current_user = CurrentUser::new(&user.username, &user.email, user.user_id,);
                 // let offers = aggregate_offers(1);
                 // let lc_offer = mock_offer(1);
                 // let lc_offers = vec![&lc_offer];
@@ -268,7 +269,7 @@ mod post {
     ) -> impl IntoResponse {
         match auth_session.user {
             Some(user) => {
-                let current_user = CurrentUser::new(&user.username, &user.email);
+                let current_user = CurrentUser::new(&user.username, &user.email, user.user_id,);
                 let is_valid = writing_sample.validate();
                 if is_valid.is_err() {
                     let validation_response = get_validation_response(is_valid);
@@ -388,7 +389,7 @@ mod get {
     use chrono::NaiveDate;
     use futures_util::{stream, Stream, StreamExt};
     use rand::{distributions::Alphanumeric, Rng};
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
     use sqlx::PgPool;
     use tokio::{
         spawn,
@@ -434,6 +435,7 @@ mod get {
             Some(user) => Some(CurrentUser {
                 username: user.username,
                 email: user.email,
+                user_id: user.user_id,
             }),
             _ => None,
         };
@@ -491,6 +493,7 @@ mod get {
             Some(user) => Some(CurrentUser {
                 username: user.username,
                 email: user.email,
+                user_id: user.user_id,
             }),
             _ => None,
         };
@@ -518,6 +521,7 @@ mod get {
                 let current_user = CurrentUser {
                     username: user.username.clone(),
                     email: user.email,
+                    user_id: user.user_id,
                 };
                 let score = 100;
                 OfferScoreTemplate { score: score }.into_response()
@@ -532,5 +536,45 @@ mod get {
         // } else {
         //     Redirect::to("/").into_response()
         // }
+    }
+
+    #[derive(Debug, Template, Deserialize)]
+    #[template(path = "famous_similars.html")]
+    pub struct FamousSimilarsTemplate {
+        pub user: Option<CurrentUser>,
+        pub message: Option<String>,
+        pub results: Vec<FamousSimilarsResponse>,
+    }
+
+    #[derive(FromRow, Debug, Deserialize, Serialize)]
+    pub struct FamousSimilarsResponse {
+        author_id: i32,
+        writing_sample: String,
+        entry_type_id: i32,
+    }
+
+    pub async fn similars(mut auth_session: AuthSession, State(state): State<Arc<Mutex<SharedState>>>, Extension(pool): Extension<PgPool>) -> impl IntoResponse {
+        match auth_session.user {
+            Some(user) => {
+                let current_user = CurrentUser::new(&user.username, &user.email, user.user_id);
+                match sqlx::query_as::<_, FamousSimilarsResponse>(
+                    "SELECT author_id, entry_type_id, writing_sample FROM famous_entries ORDER BY embedding <-> (SELECT embedding FROM writing_samples WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1) LIMIT 5;",
+                )
+                .bind(current_user.user_id)
+                .fetch_all(&pool)
+                .await
+                {
+                    Ok(entries) => {
+                        dbg!(&entries);
+                        FamousSimilarsTemplate{ results: entries, message: None, user: Some(current_user)}.into_response()
+                    }
+                    Err(err) => {
+                        dbg!(&err);
+                        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                    }
+                }
+            },
+            None => StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }

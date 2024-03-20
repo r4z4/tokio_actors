@@ -97,18 +97,21 @@ pub struct UserSettingsObj {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, FromRow)]
 pub struct CurrentUser {
+    pub user_id: i32,
     pub username: String,
     pub email: String,
 }
 
 impl CurrentUser {
-    pub fn new<S>(username: S, email: S) -> CurrentUser
+    pub fn new<S, I>(username: S, email: S, user_id: I) -> CurrentUser
     where
         S: Into<String>,
+        I: Into<i32>,
     {
         CurrentUser {
             username: username.into(),
             email: email.into(),
+            user_id: user_id.into(),
         }
     }
 }
