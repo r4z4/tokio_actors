@@ -476,7 +476,10 @@ VALUES
 (3, 'Jack Kerouac'),
 (4, 'F. Scott Fitzgerald'),
 (5, 'John Steinbeck'),
-(6, 'Jeremy Kent');
+(6, 'William Shakespeare'),
+(7, 'Jane Austen'),
+(8, 'Virginia Woolf'),
+(9, 'Franz Kafka');
 
 INSERT INTO user_types (user_type_id, user_type_name)
 VALUES

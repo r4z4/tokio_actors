@@ -141,28 +141,65 @@ pub struct FamousEntry {
     embedding: Vec<f32>,
 }
 
-fn create_docs() -> Vec<&'static str> {
+// (author_id, sample)
+pub struct FamousEntryDoc(i32, &'static str);
+
+fn create_docs() -> Vec<FamousEntryDoc> {
     // 2 of each
     vec![
-        "Words have no power to impress the mind without the exquisite horror of their reality.",
-        "I became insane, with long intervals of horrible sanity.",
-        "We are all apprentices in a craft where no one ever becomes a master.", 
-        "The world breaks everyone, and afterward, many are strong at the broken places.",
-        "Maybe that's what life is... a wink of the eye and winking stars.",
-        "Because in the end, you won't remember the time you spent working in the office or mowing your lawn. Climb that goddamn mountain.",
-        "I don't want to repeat my innocence. I want the pleasure of losing it again.",
-        "I hope she'll be a fool -- that's the best thing a girl can be in this world, a beautiful little fool.",
-        "If you're in trouble, or hurt or need - go to the poor people. They're the only ones that'll help - the only ones.",
-        "I am impelled, not to squeak like a grateful and apologetic mouse, but to roar like a lion out of pride in my profession.",
-        "This above all: to thine own self be true, And it must follow, as the night the day, Thou canst not then be false to any man.",
-        "The fool doth think he is wise, but the wise man knows himself to be a fool."
+        FamousEntryDoc(1, "Words have no power to impress the mind without the exquisite horror of their reality."),
+        FamousEntryDoc(1, "I became insane, with long intervals of horrible sanity."),
+        FamousEntryDoc(1, "Sleep, those little slices of death — how I loathe them."),
+        FamousEntryDoc(1, "Years of love have been forgot, In the hatred of a minute."),
+        FamousEntryDoc(1, "Deep into that darkness peering, long I stood there, wondering, fearing, doubting, dreaming dreams no mortal ever dared to dream before."),
+        FamousEntryDoc(2, "We are all apprentices in a craft where no one ever becomes a master."), 
+        FamousEntryDoc(2, "The world breaks everyone, and afterward, many are strong at the broken places."),
+        FamousEntryDoc(2, "How little we know of what there is to know. I wish that I were going to live a long time instead of going to die today because I have learned much about life in these four days; more, I think than in all other time. I'd like to be an old man to really know. I wonder if you keep on learning or if there is only a certain amount each man can understand. I thought I knew so many things that I know nothing of. I wish there was more time."), 
+        FamousEntryDoc(2, "If people bring so much courage to this world the world has to kill them to break them, so of course it kills them. The world breaks every one and afterward many are strong at the broken places. But those that will not break it kills. It kills the very good and the very gentle and the very brave impartially. If you are none of these you can be sure it will kill you too but there will be no special hurry."),
+        FamousEntryDoc(2, "In the morning I walked down the Boulevard to the rue Soufflot for coffee and brioche. It was a fine morning. The horse-chestnut trees in the Luxembourg gardens were in bloom. There was the pleasant early-morning feeling of a hot day."), 
+        FamousEntryDoc(3, "Maybe that's what life is... a wink of the eye and winking stars."),
+        FamousEntryDoc(3, "Because in the end, you won't remember the time you spent working in the office or mowing your lawn. Climb that goddamn mountain."),
+        FamousEntryDoc(3, "So therefore I dedicate myself, to my art, my sleep, my dreams, my labours, my suffrances, my loneliness, my unique madness, my endless absorption and hunger because I cannot dedicate myself to any fellow being."),
+        FamousEntryDoc(3, "I was surprised, as always, by how easy the act of leaving was, and how good it felt. The world was suddenly rich with possibility."),
+        FamousEntryDoc(3, "My whole wretched life swam before my weary eyes, and I realized no matter what you do it's bound to be a waste of time in the end so you might as well go mad."),
+        FamousEntryDoc(4, "I don't want to repeat my innocence. I want the pleasure of losing it again."),
+        FamousEntryDoc(4, "I hope she'll be a fool -- that's the best thing a girl can be in this world, a beautiful little fool."),
+        FamousEntryDoc(4, "I fell in love with her courage, her sincerity, and her flaming self respect. And it's these things I'd believe in, even if the whole world indulged in wild suspicions that she wasn't all she should be. I love her and it is the beginning of everything."),
+        FamousEntryDoc(4, "And so with the sunshine and the great bursts of leaves growing on the trees, just as things grow in fast movies, I had that familiar conviction that life was beginning over again with the summer."),
+        FamousEntryDoc(4, "I wasn't actually in love, but I felt a sort of tender curiosity."),
+        FamousEntryDoc(5, "If you're in trouble, or hurt or need - go to the poor people. They're the only ones that'll help - the only ones."),
+        FamousEntryDoc(5, "I am impelled, not to squeak like a grateful and apologetic mouse, but to roar like a lion out of pride in my profession."),
+        FamousEntryDoc(5, "Where does discontent start? You are warm enough, but you shiver. You are fed, yet hunger gnaws you. You have been loved, but your yearning wanders in new fields. And to prod all these there's time, the Bastard Time."),
+        FamousEntryDoc(5, "Sectional football games have the glory and the despair of war, and when a Texas team takes the field against a foreign state, it is an army with banners."),
+        FamousEntryDoc(5, "I have never smuggled anything in my life. Why, then, do I feel an uneasy sense of guilt on approaching a customs barrier?"),
+        FamousEntryDoc(6, "This above all: to thine own self be true, And it must follow, as the night the day, Thou canst not then be false to any man."),
+        FamousEntryDoc(6, "The fool doth think he is wise, but the wise man knows himself to be a fool."),
+        FamousEntryDoc(6, "Doubt thou the stars are fire, Doubt that the sun doth move. Doubt truth to be a liar, But never doubt I love."),
+        FamousEntryDoc(6, "Faith, there hath been many great men that have flattered the people who ne'er loved them."),
+        FamousEntryDoc(6, "To thine own self be true, and it must follow, as the night the day, thou canst not then be false to any man."),
+        FamousEntryDoc(7, "Her own thoughts and reflections were habitually her best companions."),
+        FamousEntryDoc(7, "There is nothing I would not do for those who are really my friends. I have no notion of loving people by halves, it is not my nature."),
+        FamousEntryDoc(7, "For what do we live, but to make sport for our neighbours and laugh at them in our turn?"),
+        FamousEntryDoc(7, "There is a stubbornness about me that never can bear to be frightened at the will of others. My courage always rises at every attempt to intimidate me."),
+        FamousEntryDoc(7, "Friendship is certainly the finest balm for the pangs of disappointed love."),
+        FamousEntryDoc(8, "When you consider things like the stars, our affairs don't seem to matter very much, do they?"),
+        FamousEntryDoc(8, "I can only note that the past is beautiful because one never realises an emotion at the time. It expands later, and thus we don't have complete emotions about the present, only about the past."),
+        FamousEntryDoc(8, "As a woman I have no country. As a woman I want no country. As a woman, my country is the whole world."),
+        FamousEntryDoc(8, "Women have served all these centuries as looking glasses possessing the magic and delicious power of reflecting the figure of man at twice its natural size."),
+        FamousEntryDoc(8, "What is the meaning of life? That was all- a simple question; one that tended to close in on one with years, the great revelation had never come. The great revelation perhaps never did come. Instead, there were little daily miracles, illuminations, matches struck unexpectedly in the dark; here was one."),
+        FamousEntryDoc(9, "Many a book is like a key to unknown chambers within the castle of one's own self."),
+        FamousEntryDoc(9, "I cannot make you understand. I cannot make anyone understand what is happening inside me. I cannot even explain it to myself."),
+        FamousEntryDoc(9, "I write differently from what I speak, I speak differently from what I think, I think differently from the way I ought to think, and so it all proceeds into deepest darkness."),
+        FamousEntryDoc(9, "You do not need to leave your room. Remain sitting at your table and listen. Do not even listen, simply wait, be quiet, still and solitary. The world will freely offer itself to you to be unmasked, it has no choice, it will roll in ecstasy at your feet."),
+        FamousEntryDoc(9, "By believing passionately in something that still does not exist, we create it. The nonexistent is whatever we have not sufficiently desired."),
     ]
 }
 
-fn generate_embeddings(docs: &Vec<&'static str>) -> Vec<Vec<f32>> {
+fn generate_embeddings(docs: &Vec<FamousEntryDoc>) -> Vec<Vec<f32>> {
     let model_res = TextEmbedding::try_new(Default::default());
     let model = model_res.unwrap();
-    let owned = docs.to_owned();
+    let strings: Vec<&str> = docs.iter().map(|doc| doc.1).collect();
+    let owned = strings.to_owned();
     let embeddings_res = model.embed(owned, None);
     let embeddings = embeddings_res.unwrap();
     return embeddings
@@ -172,18 +209,51 @@ fn famous_entries() -> Vec<FamousEntry> {
     let docs = create_docs();
     let embeddings = generate_embeddings(&docs);
     vec!{
-        FamousEntry{author_id: 1, entry_type_id: 1, writing_sample: docs[0], embedding: embeddings[0].clone()},
-        FamousEntry{author_id: 1, entry_type_id: 1, writing_sample: docs[1], embedding: embeddings[1].clone()},
-        FamousEntry{author_id: 2, entry_type_id: 1, writing_sample: docs[2], embedding: embeddings[2].clone()},
-        FamousEntry{author_id: 2, entry_type_id: 1, writing_sample: docs[3], embedding: embeddings[3].clone()},
-        FamousEntry{author_id: 3, entry_type_id: 1, writing_sample: docs[4], embedding: embeddings[4].clone()},
-        FamousEntry{author_id: 3, entry_type_id: 1, writing_sample: docs[5], embedding: embeddings[5].clone()},
-        FamousEntry{author_id: 4, entry_type_id: 1, writing_sample: docs[6], embedding: embeddings[6].clone()},
-        FamousEntry{author_id: 4, entry_type_id: 1, writing_sample: docs[7], embedding: embeddings[7].clone()},
-        FamousEntry{author_id: 5, entry_type_id: 1, writing_sample: docs[8], embedding: embeddings[8].clone()},
-        FamousEntry{author_id: 5, entry_type_id: 1, writing_sample: docs[9], embedding: embeddings[9].clone()},
-        FamousEntry{author_id: 6, entry_type_id: 1, writing_sample: docs[10], embedding: embeddings[10].clone()},
-        FamousEntry{author_id: 6, entry_type_id: 1, writing_sample: docs[11], embedding: embeddings[11].clone()},
+        FamousEntry{author_id: docs[0].0, entry_type_id: 1, writing_sample: docs[0].1, embedding: embeddings[0].clone()},
+        FamousEntry{author_id: docs[1].0, entry_type_id: 1, writing_sample: docs[1].1, embedding: embeddings[1].clone()},
+        FamousEntry{author_id: docs[2].0, entry_type_id: 1, writing_sample: docs[2].1, embedding: embeddings[2].clone()},
+        FamousEntry{author_id: docs[3].0, entry_type_id: 1, writing_sample: docs[3].1, embedding: embeddings[3].clone()},
+        FamousEntry{author_id: docs[4].0, entry_type_id: 1, writing_sample: docs[4].1, embedding: embeddings[4].clone()},
+        FamousEntry{author_id: docs[5].0, entry_type_id: 1, writing_sample: docs[5].1, embedding: embeddings[5].clone()},
+        FamousEntry{author_id: docs[6].0, entry_type_id: 1, writing_sample: docs[6].1, embedding: embeddings[6].clone()},
+        FamousEntry{author_id: docs[7].0, entry_type_id: 1, writing_sample: docs[7].1, embedding: embeddings[7].clone()},
+        FamousEntry{author_id: docs[8].0, entry_type_id: 1, writing_sample: docs[8].1, embedding: embeddings[8].clone()},
+        FamousEntry{author_id: docs[9].0, entry_type_id: 1, writing_sample: docs[9].1, embedding: embeddings[9].clone()},
+        FamousEntry{author_id: docs[10].0, entry_type_id: 1, writing_sample: docs[10].1, embedding: embeddings[10].clone()},
+        FamousEntry{author_id: docs[11].0, entry_type_id: 1, writing_sample: docs[11].1, embedding: embeddings[11].clone()},
+        FamousEntry{author_id: docs[12].0, entry_type_id: 1, writing_sample: docs[12].1, embedding: embeddings[12].clone()},
+        FamousEntry{author_id: docs[13].0, entry_type_id: 1, writing_sample: docs[13].1, embedding: embeddings[13].clone()},
+        FamousEntry{author_id: docs[14].0, entry_type_id: 1, writing_sample: docs[14].1, embedding: embeddings[14].clone()},
+        FamousEntry{author_id: docs[15].0, entry_type_id: 1, writing_sample: docs[15].1, embedding: embeddings[15].clone()},
+        FamousEntry{author_id: docs[16].0, entry_type_id: 1, writing_sample: docs[16].1, embedding: embeddings[16].clone()},
+        FamousEntry{author_id: docs[17].0, entry_type_id: 1, writing_sample: docs[17].1, embedding: embeddings[17].clone()},
+        FamousEntry{author_id: docs[18].0, entry_type_id: 1, writing_sample: docs[18].1, embedding: embeddings[18].clone()},
+        FamousEntry{author_id: docs[19].0, entry_type_id: 1, writing_sample: docs[19].1, embedding: embeddings[19].clone()},
+        FamousEntry{author_id: docs[20].0, entry_type_id: 1, writing_sample: docs[20].1, embedding: embeddings[20].clone()},
+        FamousEntry{author_id: docs[21].0, entry_type_id: 1, writing_sample: docs[21].1, embedding: embeddings[21].clone()},
+        FamousEntry{author_id: docs[22].0, entry_type_id: 1, writing_sample: docs[22].1, embedding: embeddings[22].clone()},
+        FamousEntry{author_id: docs[23].0, entry_type_id: 1, writing_sample: docs[23].1, embedding: embeddings[23].clone()},
+        FamousEntry{author_id: docs[24].0, entry_type_id: 1, writing_sample: docs[24].1, embedding: embeddings[24].clone()},
+        FamousEntry{author_id: docs[25].0, entry_type_id: 1, writing_sample: docs[25].1, embedding: embeddings[25].clone()},
+        FamousEntry{author_id: docs[26].0, entry_type_id: 1, writing_sample: docs[26].1, embedding: embeddings[26].clone()},
+        FamousEntry{author_id: docs[27].0, entry_type_id: 1, writing_sample: docs[27].1, embedding: embeddings[27].clone()},
+        FamousEntry{author_id: docs[28].0, entry_type_id: 1, writing_sample: docs[28].1, embedding: embeddings[28].clone()},
+        FamousEntry{author_id: docs[29].0, entry_type_id: 1, writing_sample: docs[29].1, embedding: embeddings[29].clone()},
+        FamousEntry{author_id: docs[30].0, entry_type_id: 1, writing_sample: docs[30].1, embedding: embeddings[30].clone()},
+        FamousEntry{author_id: docs[31].0, entry_type_id: 1, writing_sample: docs[31].1, embedding: embeddings[31].clone()},
+        FamousEntry{author_id: docs[32].0, entry_type_id: 1, writing_sample: docs[32].1, embedding: embeddings[32].clone()},
+        FamousEntry{author_id: docs[33].0, entry_type_id: 1, writing_sample: docs[33].1, embedding: embeddings[33].clone()},
+        FamousEntry{author_id: docs[34].0, entry_type_id: 1, writing_sample: docs[34].1, embedding: embeddings[34].clone()},
+        FamousEntry{author_id: docs[35].0, entry_type_id: 1, writing_sample: docs[35].1, embedding: embeddings[35].clone()},
+        FamousEntry{author_id: docs[36].0, entry_type_id: 1, writing_sample: docs[36].1, embedding: embeddings[36].clone()},
+        FamousEntry{author_id: docs[37].0, entry_type_id: 1, writing_sample: docs[37].1, embedding: embeddings[37].clone()},
+        FamousEntry{author_id: docs[38].0, entry_type_id: 1, writing_sample: docs[38].1, embedding: embeddings[38].clone()},
+        FamousEntry{author_id: docs[39].0, entry_type_id: 1, writing_sample: docs[39].1, embedding: embeddings[39].clone()},
+        FamousEntry{author_id: docs[40].0, entry_type_id: 1, writing_sample: docs[40].1, embedding: embeddings[40].clone()},
+        FamousEntry{author_id: docs[41].0, entry_type_id: 1, writing_sample: docs[41].1, embedding: embeddings[41].clone()},
+        FamousEntry{author_id: docs[42].0, entry_type_id: 1, writing_sample: docs[42].1, embedding: embeddings[42].clone()},
+        FamousEntry{author_id: docs[43].0, entry_type_id: 1, writing_sample: docs[43].1, embedding: embeddings[43].clone()},
+        FamousEntry{author_id: docs[44].0, entry_type_id: 1, writing_sample: docs[44].1, embedding: embeddings[44].clone()},
     }
 }
 
