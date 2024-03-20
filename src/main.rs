@@ -2,7 +2,7 @@
 use password_auth::generate_hash;
 use tower_http::services::ServeDir;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-
+use sqlx::{Pool, Postgres, QueryBuilder};
 use crate::web::App;
 mod users;
 mod web;
@@ -18,6 +18,9 @@ mod redis_mod;
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 // async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Perform some initial migrations
+    // FIXME: Move to Refinery SQL which allows .rs migrations
+
     let console_layer = console_subscriber::ConsoleLayer::builder().spawn();
     tracing_subscriber::registry()
         .with(console_layer)

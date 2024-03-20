@@ -24,6 +24,9 @@ DROP TABLE IF EXISTS user_sessions;
 DROP TABLE IF EXISTS user_types;
 DROP TABLE IF EXISTS user_settings;
 DROP TABLE IF EXISTS user_details;
+
+DROP TABLE IF EXISTS famous_entries;
+DROP TABLE IF EXISTS authors;
 DROP TABLE IF EXISTS writing_samples;
 DROP TABLE IF EXISTS entry_types;
 DROP TABLE IF EXISTS users;

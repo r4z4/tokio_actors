@@ -21,6 +21,7 @@ use crate::{
     users::{AuthSession, Backend},
     web::{api, auth, protected, public, ws::read_and_send_messages},
 };
+use fastembed::TextEmbedding;
 use ::time::Duration;
 use askama::Template;
 use axum::http::{
@@ -51,7 +52,7 @@ use sendgrid::error::SendgridError;
 use sendgrid::v3::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sqlx::types::time::Date;
+use sqlx::{types::time::Date, Pool, Postgres, QueryBuilder};
 use sqlx::FromRow;
 use sqlx::{
     postgres::{PgListener, PgPoolOptions},
@@ -133,6 +134,44 @@ pub struct PostTemplate<'a> {
 //         Err(_) => println!("yay"),
 //     }
 // }
+pub struct FamousEntry {
+    author_id: i32,
+    entry_type_id: i32,
+    writing_sample: &'static str,
+    embedding: Vec<f32>,
+}
+
+fn create_docs() -> Vec<&'static str> {
+    vec!["I ponder what youth may bring to the forefront.", "BAM! The pancakes were syrupy I tell ya.", "He doth not hath come again to the prospector's fair."]
+}
+
+fn generate_embeddings(docs: &Vec<&'static str>) -> Vec<Vec<f32>> {
+    let model_res = TextEmbedding::try_new(Default::default());
+    let model = model_res.unwrap();
+    let owned = docs.to_owned();
+    let embeddings_res = model.embed(owned, None);
+    let embeddings = embeddings_res.unwrap();
+    return embeddings
+}
+
+fn famous_entries() -> Vec<FamousEntry> {
+    let docs = create_docs();
+    let embeddings = generate_embeddings(&docs);
+    vec!{
+        FamousEntry{author_id: 1, entry_type_id: 1, writing_sample: docs[0], embedding: embeddings[0].clone()},
+        FamousEntry{author_id: 1, entry_type_id: 1, writing_sample: docs[1], embedding: embeddings[1].clone()},
+        FamousEntry{author_id: 1, entry_type_id: 1, writing_sample: docs[2], embedding: embeddings[2].clone()},
+    }
+}
+
+// async fn insert_entries(entries: Vec<FamousEntry>, pool: &Pool<Postgres>) {
+//     let mut query_builder = QueryBuilder::new("INSERT INTO famous_entries (author_id, entry_type_id, writing_sample, embedding) ");
+//     query_builder.push_values(entries, |mut b, new_entry| {
+//         b.push_bind(new_entry.author_id).push_bind(new_entry.entry_type_id).push_bind(new_entry.writing_sample).push_bind(new_entry.embedding);
+//     });
+//     let query = query_builder.build();
+//     query.execute(pool).await;
+// }
 
 impl App {
     pub async fn new() -> core::result::Result<Self, Box<dyn std::error::Error>> {
@@ -148,6 +187,14 @@ impl App {
         let pool = new_db_pool().await?;
         let r_pool = redis_connect();
         let current_user = None::<CurrentUser>;
+        // Why am I not able to call this from a function?
+        let entries = famous_entries();
+        let mut query_builder = QueryBuilder::new("INSERT INTO famous_entries (author_id, entry_type_id, writing_sample, embedding) ");
+        query_builder.push_values(entries, |mut b, new_entry| {
+            b.push_bind(new_entry.author_id).push_bind(new_entry.entry_type_id).push_bind(new_entry.writing_sample).push_bind(new_entry.embedding);
+        });
+        let query = query_builder.build();
+        query.execute(&pool).await;
 
         Ok(Self { pool, r_pool })
     }

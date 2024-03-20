@@ -184,6 +184,26 @@ CREATE TABLE IF NOT EXISTS territories (
         territory_states TEXT[] NULL
     );
 
+CREATE TABLE IF NOT EXISTS authors (
+        author_id SERIAL PRIMARY KEY,
+        author_name TEXT NOT NULL
+    );
+
+CREATE TABLE IF NOT EXISTS famous_entries (
+    famous_entry_id SERIAL PRIMARY KEY,
+    author_id INTEGER NOT NULL,
+    entry_type_id INTEGER NOT NULL,
+    writing_sample TEXT NULL,
+    -- 384 Dimensions for model BAAI/bge-small-en-v1.5. Default model for FastEmbed.
+    embedding vector(384),
+    CONSTRAINT fk_author
+        FOREIGN KEY(author_id) 
+            REFERENCES authors(author_id),
+    CONSTRAINT fk_entry_type
+        FOREIGN KEY(entry_type_id) 
+            REFERENCES entry_types(entry_type_id)
+);
+
 CREATE TABLE IF NOT EXISTS writing_samples (
     writing_sample_id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -448,6 +468,15 @@ VALUES
 (4, 'technology'),
 (5, 'government'),
 (6, 'legal');
+
+INSERT INTO authors (author_id, author_name)
+VALUES
+(1, 'Edgar Allan Poe'),
+(2, 'Ernest Hemingway'),
+(3, 'Jack Kerouac'),
+(4, 'F. Scott Fitzgerald'),
+(5, 'John Steinbeck'),
+(6, 'Jeremy Kent');
 
 INSERT INTO user_types (user_type_id, user_type_name)
 VALUES
