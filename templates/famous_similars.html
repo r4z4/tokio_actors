@@ -3,11 +3,16 @@
   <span><strong>{{ message }}</strong></span>
   {% endif %}
   <h1 class="main_header">Famous Similars</h1>
+    {% if details.author_count > 1 %}
+        <div id="highest_similar">
+            <p>Looks like you matched with the author {{details.author_name}} more than any other: #({{details.author_count}})</p>
+        </div>
+    {% endif %}
     <div class="offers_template_offers">
-        <ul class="offer_list">
+        <ul class="similars_list">
         {% for result in results %}
-            <li>
-                <p>Author: {{ result.author_id }}</p>
+            <li class="similars_list_item">
+                <p>Author: {{ result.author_name }}</p>
                 <p>Type: {{ result.entry_type_id }}</p>
                 <p>Entry: {{ result.writing_sample }}</p>
             </li>

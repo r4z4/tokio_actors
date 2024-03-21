@@ -542,15 +542,22 @@ mod get {
     #[template(path = "famous_similars.html")]
     pub struct FamousSimilarsTemplate {
         pub user: Option<CurrentUser>,
+        pub details: FamousSimilarsDetails,
         pub message: Option<String>,
         pub results: Vec<FamousSimilarsResponse>,
     }
 
     #[derive(FromRow, Debug, Deserialize, Serialize)]
     pub struct FamousSimilarsResponse {
-        author_id: i32,
+        author_name: String,
         writing_sample: String,
         entry_type_id: i32,
+    }
+
+    #[derive(FromRow, Debug, Deserialize, Serialize)]
+    pub struct FamousSimilarsDetails {
+        author_name: String,
+        author_count: usize,
     }
 
     pub async fn similars(mut auth_session: AuthSession, State(state): State<Arc<Mutex<SharedState>>>, Extension(pool): Extension<PgPool>) -> impl IntoResponse {
@@ -558,7 +565,9 @@ mod get {
             Some(user) => {
                 let current_user = CurrentUser::new(&user.username, &user.email, user.user_id);
                 match sqlx::query_as::<_, FamousSimilarsResponse>(
-                    "SELECT author_id, entry_type_id, writing_sample FROM famous_entries ORDER BY embedding <-> (SELECT embedding FROM writing_samples WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1) LIMIT 5;",
+                    "SELECT author_name, entry_type_id, writing_sample FROM famous_entries
+                    LEFT JOIN authors ON authors.author_id = famous_entries.author_id
+                    ORDER BY embedding <-> (SELECT embedding FROM writing_samples WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1) LIMIT 5;",
                 )
                 .bind(current_user.user_id)
                 .fetch_all(&pool)
@@ -566,7 +575,14 @@ mod get {
                 {
                     Ok(entries) => {
                         dbg!(&entries);
-                        FamousSimilarsTemplate{ results: entries, message: None, user: Some(current_user)}.into_response()
+                        let authors = entries.iter().map(|entry| {&entry.author_name}).collect::<Vec<&String>>();
+                        let mut m: HashMap<&String, usize> = HashMap::new();
+                        for author in authors {
+                            *m.entry(author).or_default() += 1;
+                        }
+                        let max = m.into_iter().max_by_key(|(_, v)| *v).map(|(k, v)| (k,v));
+                        let details = FamousSimilarsDetails{author_name: max.unwrap().0.to_string(), author_count: max.unwrap().1};
+                        FamousSimilarsTemplate{ results: entries, details: details, message: None, user: Some(current_user)}.into_response()
                     }
                     Err(err) => {
                         dbg!(&err);

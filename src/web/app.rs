@@ -145,7 +145,8 @@ pub struct FamousEntry {
 pub struct FamousEntryDoc(i32, &'static str);
 
 fn create_docs() -> Vec<FamousEntryDoc> {
-    // 2 of each
+    // 5 of each
+    // FIXME: Read from file
     vec![
         FamousEntryDoc(1, "Words have no power to impress the mind without the exquisite horror of their reality."),
         FamousEntryDoc(1, "I became insane, with long intervals of horrible sanity."),
@@ -172,7 +173,7 @@ fn create_docs() -> Vec<FamousEntryDoc> {
         FamousEntryDoc(5, "Where does discontent start? You are warm enough, but you shiver. You are fed, yet hunger gnaws you. You have been loved, but your yearning wanders in new fields. And to prod all these there's time, the Bastard Time."),
         FamousEntryDoc(5, "Sectional football games have the glory and the despair of war, and when a Texas team takes the field against a foreign state, it is an army with banners."),
         FamousEntryDoc(5, "I have never smuggled anything in my life. Why, then, do I feel an uneasy sense of guilt on approaching a customs barrier?"),
-        FamousEntryDoc(6, "This above all: to thine own self be true, And it must follow, as the night the day, Thou canst not then be false to any man."),
+        FamousEntryDoc(6, "When yond same star that's westward from the pole, Had made his course t'illume that part of heaven, Where now it burns, Marcellus and myself, The bell then beating one"),
         FamousEntryDoc(6, "The fool doth think he is wise, but the wise man knows himself to be a fool."),
         FamousEntryDoc(6, "Doubt thou the stars are fire, Doubt that the sun doth move. Doubt truth to be a liar, But never doubt I love."),
         FamousEntryDoc(6, "Faith, there hath been many great men that have flattered the people who ne'er loved them."),
@@ -208,53 +209,11 @@ fn generate_embeddings(docs: &Vec<FamousEntryDoc>) -> Vec<Vec<f32>> {
 fn famous_entries() -> Vec<FamousEntry> {
     let docs = create_docs();
     let embeddings = generate_embeddings(&docs);
-    vec!{
-        FamousEntry{author_id: docs[0].0, entry_type_id: 1, writing_sample: docs[0].1, embedding: embeddings[0].clone()},
-        FamousEntry{author_id: docs[1].0, entry_type_id: 1, writing_sample: docs[1].1, embedding: embeddings[1].clone()},
-        FamousEntry{author_id: docs[2].0, entry_type_id: 1, writing_sample: docs[2].1, embedding: embeddings[2].clone()},
-        FamousEntry{author_id: docs[3].0, entry_type_id: 1, writing_sample: docs[3].1, embedding: embeddings[3].clone()},
-        FamousEntry{author_id: docs[4].0, entry_type_id: 1, writing_sample: docs[4].1, embedding: embeddings[4].clone()},
-        FamousEntry{author_id: docs[5].0, entry_type_id: 1, writing_sample: docs[5].1, embedding: embeddings[5].clone()},
-        FamousEntry{author_id: docs[6].0, entry_type_id: 1, writing_sample: docs[6].1, embedding: embeddings[6].clone()},
-        FamousEntry{author_id: docs[7].0, entry_type_id: 1, writing_sample: docs[7].1, embedding: embeddings[7].clone()},
-        FamousEntry{author_id: docs[8].0, entry_type_id: 1, writing_sample: docs[8].1, embedding: embeddings[8].clone()},
-        FamousEntry{author_id: docs[9].0, entry_type_id: 1, writing_sample: docs[9].1, embedding: embeddings[9].clone()},
-        FamousEntry{author_id: docs[10].0, entry_type_id: 1, writing_sample: docs[10].1, embedding: embeddings[10].clone()},
-        FamousEntry{author_id: docs[11].0, entry_type_id: 1, writing_sample: docs[11].1, embedding: embeddings[11].clone()},
-        FamousEntry{author_id: docs[12].0, entry_type_id: 1, writing_sample: docs[12].1, embedding: embeddings[12].clone()},
-        FamousEntry{author_id: docs[13].0, entry_type_id: 1, writing_sample: docs[13].1, embedding: embeddings[13].clone()},
-        FamousEntry{author_id: docs[14].0, entry_type_id: 1, writing_sample: docs[14].1, embedding: embeddings[14].clone()},
-        FamousEntry{author_id: docs[15].0, entry_type_id: 1, writing_sample: docs[15].1, embedding: embeddings[15].clone()},
-        FamousEntry{author_id: docs[16].0, entry_type_id: 1, writing_sample: docs[16].1, embedding: embeddings[16].clone()},
-        FamousEntry{author_id: docs[17].0, entry_type_id: 1, writing_sample: docs[17].1, embedding: embeddings[17].clone()},
-        FamousEntry{author_id: docs[18].0, entry_type_id: 1, writing_sample: docs[18].1, embedding: embeddings[18].clone()},
-        FamousEntry{author_id: docs[19].0, entry_type_id: 1, writing_sample: docs[19].1, embedding: embeddings[19].clone()},
-        FamousEntry{author_id: docs[20].0, entry_type_id: 1, writing_sample: docs[20].1, embedding: embeddings[20].clone()},
-        FamousEntry{author_id: docs[21].0, entry_type_id: 1, writing_sample: docs[21].1, embedding: embeddings[21].clone()},
-        FamousEntry{author_id: docs[22].0, entry_type_id: 1, writing_sample: docs[22].1, embedding: embeddings[22].clone()},
-        FamousEntry{author_id: docs[23].0, entry_type_id: 1, writing_sample: docs[23].1, embedding: embeddings[23].clone()},
-        FamousEntry{author_id: docs[24].0, entry_type_id: 1, writing_sample: docs[24].1, embedding: embeddings[24].clone()},
-        FamousEntry{author_id: docs[25].0, entry_type_id: 1, writing_sample: docs[25].1, embedding: embeddings[25].clone()},
-        FamousEntry{author_id: docs[26].0, entry_type_id: 1, writing_sample: docs[26].1, embedding: embeddings[26].clone()},
-        FamousEntry{author_id: docs[27].0, entry_type_id: 1, writing_sample: docs[27].1, embedding: embeddings[27].clone()},
-        FamousEntry{author_id: docs[28].0, entry_type_id: 1, writing_sample: docs[28].1, embedding: embeddings[28].clone()},
-        FamousEntry{author_id: docs[29].0, entry_type_id: 1, writing_sample: docs[29].1, embedding: embeddings[29].clone()},
-        FamousEntry{author_id: docs[30].0, entry_type_id: 1, writing_sample: docs[30].1, embedding: embeddings[30].clone()},
-        FamousEntry{author_id: docs[31].0, entry_type_id: 1, writing_sample: docs[31].1, embedding: embeddings[31].clone()},
-        FamousEntry{author_id: docs[32].0, entry_type_id: 1, writing_sample: docs[32].1, embedding: embeddings[32].clone()},
-        FamousEntry{author_id: docs[33].0, entry_type_id: 1, writing_sample: docs[33].1, embedding: embeddings[33].clone()},
-        FamousEntry{author_id: docs[34].0, entry_type_id: 1, writing_sample: docs[34].1, embedding: embeddings[34].clone()},
-        FamousEntry{author_id: docs[35].0, entry_type_id: 1, writing_sample: docs[35].1, embedding: embeddings[35].clone()},
-        FamousEntry{author_id: docs[36].0, entry_type_id: 1, writing_sample: docs[36].1, embedding: embeddings[36].clone()},
-        FamousEntry{author_id: docs[37].0, entry_type_id: 1, writing_sample: docs[37].1, embedding: embeddings[37].clone()},
-        FamousEntry{author_id: docs[38].0, entry_type_id: 1, writing_sample: docs[38].1, embedding: embeddings[38].clone()},
-        FamousEntry{author_id: docs[39].0, entry_type_id: 1, writing_sample: docs[39].1, embedding: embeddings[39].clone()},
-        FamousEntry{author_id: docs[40].0, entry_type_id: 1, writing_sample: docs[40].1, embedding: embeddings[40].clone()},
-        FamousEntry{author_id: docs[41].0, entry_type_id: 1, writing_sample: docs[41].1, embedding: embeddings[41].clone()},
-        FamousEntry{author_id: docs[42].0, entry_type_id: 1, writing_sample: docs[42].1, embedding: embeddings[42].clone()},
-        FamousEntry{author_id: docs[43].0, entry_type_id: 1, writing_sample: docs[43].1, embedding: embeddings[43].clone()},
-        FamousEntry{author_id: docs[44].0, entry_type_id: 1, writing_sample: docs[44].1, embedding: embeddings[44].clone()},
-    }
+    docs.iter().enumerate().map(|(idx, doc)| FamousEntry{author_id: docs[idx].0, entry_type_id: 1, writing_sample: docs[idx].1, embedding: embeddings[idx].clone()}).collect::<Vec<FamousEntry>>()
+    // vec!{
+    //     FamousEntry{author_id: docs[0].0, entry_type_id: 1, writing_sample: docs[0].1, embedding: embeddings[0].clone()},
+    //     ...
+    // }
 }
 
 // async fn insert_entries(entries: Vec<FamousEntry>, pool: &Pool<Postgres>) {
