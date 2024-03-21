@@ -21,7 +21,13 @@
         >
             Similar Styles
         </button>
-        <button>Similar Themes</button>
+        <button
+            class="main_btn"
+            hx-get="/lrtc" 
+            hx-swap="innerHTML" 
+            hx-target="#similars_two" 
+            hx-trigger="click, click from:#get_all"
+        >Similar Themes</button>
         <button>Similar Structure</button>
         <button>Find Inspiration</button>
     </div>

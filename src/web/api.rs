@@ -23,6 +23,7 @@ use std::sync::Mutex;
 use pgvector::Vector;
 use super::AppState;
 use super::SharedState;
+use lrtc::{CompressionAlgorithm, classify};
 
 pub fn router() -> Router<Arc<Mutex<SharedState>>> {
     Router::new()
@@ -32,6 +33,7 @@ pub fn router() -> Router<Arc<Mutex<SharedState>>> {
         .route("/submit_sample", post(self::post::submit_sample))
         .route("/offer-score", get(self::get::offer_score))
         .route("/similars", get(self::get::similars))
+        .route("/lrtc", get(self::get::lrtc))
 }
 
 fn get_comp_offer(app: ApplicationPostResponse) -> Offer {
@@ -403,7 +405,7 @@ mod get {
         models::{
             self,
             application::{Application, ApplicationTemplate},
-        },
+        }, web::app::create_docs,
     };
 
     use super::*;
@@ -567,7 +569,7 @@ mod get {
                 match sqlx::query_as::<_, FamousSimilarsResponse>(
                     "SELECT author_name, entry_type_id, writing_sample FROM famous_entries
                     LEFT JOIN authors ON authors.author_id = famous_entries.author_id
-                    ORDER BY embedding <-> (SELECT embedding FROM writing_samples WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1) LIMIT 5;",
+                    ORDER BY embedding <=> (SELECT embedding FROM writing_samples WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1) LIMIT 5;",
                 )
                 .bind(current_user.user_id)
                 .fetch_all(&pool)
@@ -589,6 +591,31 @@ mod get {
                         StatusCode::INTERNAL_SERVER_ERROR.into_response()
                     }
                 }
+            },
+            None => StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
+    }
+
+    #[derive(Debug, Template, Deserialize)]
+    #[template(path = "lrtc_template.html")]
+    pub struct LrtcTemplate {
+        pub pred: Option<String>,
+    }
+
+    pub async fn lrtc(mut auth_session: AuthSession, State(state): State<Arc<Mutex<SharedState>>>, Extension(pool): Extension<PgPool>) -> impl IntoResponse {
+        match auth_session.user {
+            Some(user) => {
+                let current_user = CurrentUser::new(&user.username, &user.email, user.user_id);
+                let docs = create_docs();
+                // FIXME: Make the category itself a string instead
+                let texts = docs.iter().map(|doc| {doc.1.to_string()}).collect::<Vec<String>>();
+                let labels = docs.iter().map(|doc| {doc.2.to_string()}).collect::<Vec<String>>();
+                // let training = vec!["some normal sentence".to_string(), "godzilla ate mars in June".into(),];
+                // let training_labels = vec!["normal".to_string(), "godzilla".into(),];
+                let query = vec!["Love is all that matters in this life, love of man and woman.".to_string()];
+                // Using a compression level of 3, and 1 nearest neighbor:
+                println!("{:?}", classify(&texts, &labels, &query, 3i32, CompressionAlgorithm::Gzip, 1usize));
+                LrtcTemplate{ pred: None }.into_response()
             },
             None => StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }

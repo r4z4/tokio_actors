@@ -29,6 +29,7 @@ DROP TABLE IF EXISTS famous_entries;
 DROP TABLE IF EXISTS authors;
 DROP TABLE IF EXISTS writing_samples;
 DROP TABLE IF EXISTS entry_types;
+DROP TABLE IF EXISTS entry_categories;
 DROP TABLE IF EXISTS users;
 -- This needs to be last
 DROP TABLE IF EXISTS accounts;

@@ -5,7 +5,8 @@
   <h1 class="main_header">Famous Similars</h1>
     {% if details.author_count > 1 %}
         <div id="highest_similar">
-            <p>Looks like you matched with the author {{details.author_name}} more than any other: #({{details.author_count}})</p>
+            <h1>{{details.author_name}}</h1>
+            <p>Your writing style is most similar to the style of {{details.author_name}} than any other: #({{details.author_count}})</p>
         </div>
     {% endif %}
     <div class="offers_template_offers">

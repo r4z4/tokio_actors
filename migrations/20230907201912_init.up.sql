@@ -172,6 +172,11 @@ CREATE TABLE IF NOT EXISTS entry_types (
         entry_type_name TEXT NOT NULL UNIQUE
     );
 
+CREATE TABLE IF NOT EXISTS entry_categories (
+        entry_category_id SERIAL PRIMARY KEY,
+        entry_category_name TEXT NOT NULL UNIQUE
+    );
+
 CREATE TABLE IF NOT EXISTS article_categories (
         category_id SERIAL PRIMARY KEY,
         category_name TEXT NOT NULL UNIQUE
@@ -468,6 +473,19 @@ VALUES
 (4, 'technology'),
 (5, 'government'),
 (6, 'legal');
+
+INSERT INTO entry_categories (entry_category_id, entry_category_name)
+VALUES
+(1, 'narrative'),
+(2, 'fiction'),
+(3, 'descriptive'),
+(4, 'historical'),
+(5, 'romance'),
+(6, 'dystopian'),
+(7, 'poetry'),
+(8, 'realism'),
+(9, 'creative_writing'),
+(10, 'mystery');
 
 INSERT INTO authors (author_id, author_name)
 VALUES
