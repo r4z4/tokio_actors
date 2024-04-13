@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashSet, hash::RandomState, sync::{Arc, MutexGuard}};
 
 use crate::{
     actors::actor::mock_offer,
@@ -10,6 +10,7 @@ use async_stream::try_stream;
 use axum::response::sse::{Event, Sse};
 use axum::routing::post;
 use axum::{
+    extract::{ws::{Message, WebSocket, WebSocketUpgrade}, State},
     debug_handler,
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -17,6 +18,7 @@ use axum::{
     Router,
 };
 use axum_extra::{headers, TypedHeader};
+use futures_util::{SinkExt, StreamExt};
 use serde::Deserialize;
 use sqlx::FromRow;
 use std::sync::Mutex;
@@ -36,6 +38,7 @@ pub fn router() -> Router<Arc<Mutex<SharedState>>> {
         .route("/offer-score", get(self::get::offer_score))
         .route("/similars", get(self::get::similars))
         .route("/lrtc", get(self::get::lrtc))
+        .route("/websocket", get(websocket_handler))
 }
 
 fn get_comp_offer(app: ApplicationPostResponse) -> Offer {
@@ -49,6 +52,95 @@ fn get_comp_offer(app: ApplicationPostResponse) -> Offer {
 pub struct ApplicationPostResponse {
     pub application_id: i32,
 }
+
+async fn websocket_handler(
+    ws: WebSocketUpgrade,
+    State(state): State<Arc<Mutex<SharedState>>>,
+) -> impl IntoResponse {
+    ws.on_upgrade(|socket| websocket(socket, state))
+}
+
+async fn websocket(stream: WebSocket, state: Arc<Mutex<SharedState>>) {
+    println!("WsWsWsWsWs");
+    // By splitting, we can send and receive at the same time.
+    let (mut sender, mut receiver) = stream.split();
+    // Username gets set in the receive loop, if it's valid.
+    let mut username = String::new();
+    dbg!(&username);
+    // Loop until a text message is found.
+    while let Some(Ok(message)) = receiver.next().await {
+        if let Message::Text(name) = message {
+            // If username that is sent by client is not taken, fill username string.
+            check_username(&state.lock().unwrap().user_set, &mut username, &name);
+
+            // If not empty we want to quit the loop else we want to quit function.
+            if !username.is_empty() {
+                break;
+            } else {
+                // Only send our client that username is taken.
+                let _ = sender
+                    .send(Message::Text(String::from("Username already taken.")))
+                    .await;
+
+                return;
+            }
+        }
+    }
+
+    // Subscribe *before* sending "joined" message, so we also display it to our client.
+    let mut rx = state.lock().unwrap().tx.subscribe();
+    // Now send "joined" message to all subscribers.
+    let msg = format!("{username} has joined.");
+    tracing::debug!("{msg}");
+    let _ = state.lock().unwrap().tx.send(msg);
+
+    // Spawn the first task that will receive broadcast messages and send text
+    // messages over the websocket to our client.
+    let mut send_task = tokio::spawn(async move {
+        while let Ok(msg) = rx.recv().await {
+            // In any websocket error, break loop.
+            if sender.send(Message::Text(msg)).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    // Clone things we want to pass (move) to the receiving task.
+    let tx = state.lock().unwrap().tx.clone();
+    let name = username.clone();
+
+    // Spawn a task that takes messages from the websocket, prepends the user
+    // name, and sends them to all broadcast subscribers.
+    let mut recv_task = tokio::spawn(async move {
+        while let Some(Ok(Message::Text(text))) = receiver.next().await {
+            // Add username before message.
+            let _ = tx.send(format!("{name}: {text}"));
+        }
+    });
+
+    // If any one of the tasks run to completion, we abort the other.
+    tokio::select! {
+        _ = (&mut send_task) => recv_task.abort(),
+        _ = (&mut recv_task) => send_task.abort(),
+    };
+
+    // Send "user left" message (similar to "joined" above).
+    let msg = format!("{username} has left.");
+    tracing::debug!("{msg}");
+    let _ = state.lock().unwrap().tx.send(msg);
+
+    // Remove username from map so new clients can take it again.
+    state.lock().unwrap().user_set.lock().unwrap().remove(&username);
+}
+
+fn check_username(user_set: &Mutex<HashSet<String, RandomState>>, string: &mut String, name: &str) {
+    if !user_set.lock().unwrap().contains(name) {
+        user_set.lock().unwrap().insert(name.to_owned());
+
+        string.push_str(name);
+    }
+}
+
 
 mod post {
     use std::{collections::HashMap, convert::Infallible, time::Duration};

@@ -59,7 +59,7 @@ use sqlx::{
     PgPool,
 };
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     env,
     net::SocketAddr,
     sync::{Arc, Mutex, RwLock},
@@ -97,6 +97,9 @@ pub struct SharedState {
     pub offer_rx: Option<broadcast::Receiver<Offer>>,
     pub name: Option<String>,
     pub actor_handle: ActorHandle,
+    pub user_set: Mutex<HashSet<String>>,
+    // Channel used to send messages to all connected clients.
+    pub tx: broadcast::Sender<String>,
 }
 
 pub struct App {
@@ -379,6 +382,9 @@ impl App {
         //     }
         // });
 
+        let user_set = Mutex::new(HashSet::new());
+        let (tx, _rx) = broadcast::channel(100);
+
         let channels = vec!["table_update", "new_app_notification"];
         let hm: HashMap<String, String> = HashMap::new();
         let constants = Arc::new(RwLock::new(hm));
@@ -441,6 +447,8 @@ impl App {
             actor_handle: actor_handle.clone(),
             offer_tx: None,
             offer_rx: None,
+            tx: tx,
+            user_set: user_set,
         }));
 
         let offer_handle = ActorHandle::new();
