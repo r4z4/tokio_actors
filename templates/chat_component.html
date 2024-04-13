@@ -1,0 +1,39 @@
+<div id="chat_component_{{name}}">
+  <h6 class="text-white text-center">Room: {{name}}</h6><span _="on click remove #chat_component_{{name}} from #chat_room_grid then remove @disabled from #{{name}}_com_btn">X</span>
+  <div hx-ext="ws" ws-connect="/ws/{{name}}">
+    <div class="flex bg-slate-100 p-4 rounded-lg">
+      <ul id="chat_room_{{name}}" hx-swap="beforeend">
+      </ul>
+    </div>
+
+    <form id="form" ws-send hx-ext="reset-on-success">
+      <input 
+        id="chat_input_{{name}}" 
+        name="text" 
+        type="textarea" 
+        rows="4" 
+        class="mt-2 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+        placeholder="Type your message"
+        required
+      />
+      <button type="submit" id="chat_submit_{{name}}" class="mt-2 px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Send</button>
+    </form>
+    <form id="upload_input_{{name}}" hx-encoding='multipart/form-data' hx-post='/chat/upload' hx-swap="innerHTML" hx-target="#validation_response" hx-ext="reset-on-success"
+      _='on htmx:xhr:progress(loaded, total) set #progress.value to (loaded/total)*100'>
+    <input 
+      type="file" 
+      id="file_upload" 
+      name="upload"
+      accept=".jpeg,.png,.jpg,.gif,.csv,.pdf,.json"
+      class="mt-2 bg-purple-500 hover:bg-purple-700 text-white font-bold rounded-full"
+    >
+    <button id="upload_btn" class="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+        Upload
+    </button>
+    <progress id='progress' value='0' max='100'></progress>
+    <div id="validation_response" _="on mutation if my innerHTML != 'Error'
+                                    set #chat_input_{{name}}.value to my innerHTML
+                                    then set #progress.value to 0"></div>
+  </form>
+  </div>
+</div>

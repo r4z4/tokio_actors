@@ -182,6 +182,11 @@ CREATE TABLE IF NOT EXISTS article_categories (
         category_name TEXT NOT NULL UNIQUE
     );
 
+CREATE TABLE IF NOT EXISTS room_categories (
+        category_id SERIAL PRIMARY KEY,
+        category_name TEXT NOT NULL UNIQUE
+    );
+
 
 CREATE TABLE IF NOT EXISTS territories (
         territory_id SERIAL PRIMARY KEY,
@@ -207,6 +212,24 @@ CREATE TABLE IF NOT EXISTS famous_entries (
     CONSTRAINT fk_entry_type
         FOREIGN KEY(entry_type_id) 
             REFERENCES entry_types(entry_type_id)
+);
+
+CREATE TABLE IF NOT EXISTS rooms (
+    room_id SERIAL PRIMARY KEY,
+    room_name VARCHAR(100) NOT NULL,
+    created_by INTEGER NOT NULL,
+    moderator INTEGER NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    category_id INTEGER NOT NULL,
+    CONSTRAINT fk_created_by
+        FOREIGN KEY(created_by) 
+            REFERENCES users(user_id),
+    CONSTRAINT fk_moderator
+        FOREIGN KEY(moderator) 
+            REFERENCES users(user_id),
+    CONSTRAINT fk_category
+        FOREIGN KEY(category_id) 
+            REFERENCES room_categories(category_id)
 );
 
 CREATE TABLE IF NOT EXISTS writing_samples (
@@ -541,6 +564,13 @@ VALUES
 (3, 'strategy'),
 (4, 'company-alert');
 
+INSERT INTO room_categories (category_id, category_name)
+VALUES
+(1, 'general'),
+(2, 'entertainment'),
+(3, 'news'),
+(4, 'business');
+
 INSERT INTO mime_types (mime_type_id, mime_type_name)
 VALUES
 (1, 'image/png'),
@@ -637,6 +667,12 @@ INSERT INTO contacts (contact_title, contact_f_name, contact_l_name, contact_ema
 VALUES 
 ('Site Admin',       'Greg',  'Cote',   'cote@gregslobos.com',  '555-555-5555', '555-555-5555'),
 ('Location Manager', 'Billy', 'Gil',    'bill@marlins.com',     '555-555-5555', '555-555-5555');
+
+INSERT INTO rooms (room_name, category_id, moderator, created_by) VALUES
+('general', 1, 1, 1),
+('movies', 2, 1, 1),
+('news', 3, 1, 1),
+('music', 2, 1, 1);
 
 INSERT INTO locations (location_name, location_address_one, location_address_two, location_city, location_state, location_zip, location_phone, location_contact_id, territory_id) 
 VALUES 

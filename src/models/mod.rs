@@ -7,3 +7,4 @@ pub mod offer;
 pub mod payment;
 pub mod servicer;
 pub mod store;
+pub mod chat;

@@ -29,6 +29,8 @@ pub fn router() -> Router<Arc<Mutex<SharedState>>> {
     Router::new()
         .route("/application", get(self::get::get_application))
         .route("/writing_sample", get(self::get::get_writing_sample_form))
+        .route("/chat", get(self::get::chat))
+        .route("/components/:component_name", get(self::get::component))
         .route("/apply", post(self::post::apply))
         .route("/submit_sample", post(self::post::submit_sample))
         .route("/offer-score", get(self::get::offer_score))
@@ -384,11 +386,12 @@ mod get {
     use std::{collections::HashMap, convert::Infallible, net::SocketAddr, time::Duration};
 
     use axum::{
-        extract::{ConnectInfo, Query, State},
+        extract::{ConnectInfo, Path, Query, State},
         response::Redirect,
         Extension, Form,
     };
     use chrono::NaiveDate;
+    use deadpool_redis::Pool as RedisPool;
     use futures_util::{stream, Stream, StreamExt};
     use rand::{distributions::Alphanumeric, Rng};
     use serde::{Deserialize, Serialize};
@@ -404,7 +407,7 @@ mod get {
         error::AppError,
         models::{
             self,
-            application::{Application, ApplicationTemplate},
+            application::{Application, ApplicationTemplate}, chat::Room,
         }, web::app::create_docs,
     };
 
@@ -504,6 +507,93 @@ mod get {
             // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
             Ok(users) => WritingSampleTemplate{ message: None, entity: None, validation_errors: FormErrorResponse{errors: None}, user: current_user, entry_type_options: entry_type_options}.into_response(),
             Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response(),
+        }
+    }
+
+    #[derive(Debug, Template, Deserialize)]
+    #[template(path = "chat_index.html")]
+    pub struct ChatTemplate {
+        pub rooms: Vec<Room>,
+    }
+
+    #[debug_handler]
+    pub async fn chat(
+        State(state): State<Arc<Mutex<SharedState>>>,
+        ConnectInfo(addr): ConnectInfo<SocketAddr>,
+        Query(params): Query<HashMap<String, String>>,
+        auth_session: AuthSession,
+        Extension(pool): Extension<PgPool>,
+    ) -> Response {
+        // let msg = ActorMessage::RegularMessage { text: "Hey from get_users()".to_owned() };
+        // let _ = state.lock().unwrap().actor_handle.sender.send(msg).await;
+
+        let rooms = sqlx::query_as::<_, models::chat::Room>(
+            "SELECT room_id, room_name, created_by FROM rooms;",
+        )
+        .fetch_all(&pool)
+        .await
+        .map_err(|err| {
+            dbg!(err);
+            AppError::InternalServerError
+        });
+
+        // let entry_type_options = get_entry_type_options(&pool).await;
+
+        // dbg!(&entry_type_options);
+
+        let current_user = match auth_session.user {
+            Some(user) => Some(CurrentUser {
+                username: user.username,
+                email: user.email,
+                user_id: user.user_id,
+            }),
+            _ => None,
+        };
+
+        match rooms {
+            // Ok(users) => (StatusCode::CREATED, Json(users)).into_response(),
+            Ok(rooms) => ChatTemplate{ rooms: rooms}.into_response(),
+            Err(_) => (StatusCode::CREATED, AppError::InternalServerError).into_response(),
+        }
+    }
+
+    #[derive(Debug, Template, Deserialize)]
+    #[template(path = "chat_component.html")]
+    pub struct ChatComponentTemplate {
+        pub name: String,
+    }
+
+    #[debug_handler]
+    pub async fn component(
+        Path(component_name): Path<String>,
+        Extension(pool): Extension<PgPool>,
+        // Extension(r_pool): Extension<RedisPool>,
+        State(state): State<Arc<Mutex<SharedState>>>,
+    ) -> impl IntoResponse {
+        // let mut con = r_pool.get().await.unwrap();
+        // let prefix = "hset";
+        // let result = redis::cmd("HGET")
+        //     .arg(format!("{}:{}", prefix, "headline"))
+        //     .arg(format!("{}", article_id.to_string()))
+        //     .query_async::<_, Headline>(&mut con)
+        //     .await;
+        // dbg!(&result);
+        let res: Result<String, &str> = Ok(component_name);
+        match res {
+            Ok(result) => {
+                return (
+                    StatusCode::CREATED,
+                    ChatComponentTemplate { name: result },
+                )
+                    .into_response();
+            }
+            Err(err) => {
+                // dbg!(err.as_database_error().unwrap());
+                return (
+                    StatusCode::BAD_REQUEST,
+                    AppError::InternalServerError)
+                .into_response();
+            }
         }
     }
 

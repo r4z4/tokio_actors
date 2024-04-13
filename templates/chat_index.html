@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block head %}
+  <style>
+  </style>
+{% endblock %}
+
+{% block content %}
+<h1 class="text-center text-2xl mt-2 sm:text-2xl tracking-widest text-white lg:text-3xl">Chat Index Page</h1>
+<div>
+  <div class="grid grid-flow-col auto-cols-auto">
+    <div><a href="/chat/music">Music Chat</a></div>
+    <div><a href="/chat/movies">Movies Chat</a></div>
+    <div><a hx-get="/components/music" hx-swap="innerHTML" hx-target="#chat_1">Music Component</a></div>
+    <div><a hx-get="/components/movies" hx-swap="innerHTML" hx-target="#chat_2">Movies Component</a></div>
+    <div><button id="music_com_btn" hx-get="/components/music" hx-swap="beforeend" hx-target="#chat_room_grid" class="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Music Component Grid</button></div>
+    <div><button id="movies_com_btn" hx-get="/components/movies" hx-swap="beforeend" hx-target="#chat_room_grid" class="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Movies Component Grid</button></div>
+  </div>
+</div>
+
+  <div id="chat_1" class="p-4 text-center text-white bg-blue-500"></div>
+  <div id="chat_2" class="p-4 text-center text-white bg-blue-500"></div>
+
+  <div id="chat_room_grid" class="grid grid-flow-col auto-cols-auto justify-around mt-8" 
+    _="on mutation 
+    if my innerHTML contains 'chat_room_music' 
+      add @disabled to #music_com_btn
+    end
+    if my innerHTML contains 'chat_room_movies'
+      add @disabled to #movies_com_btn
+    end">
+  </div>
+
+  <div class="offers_template_offers">
+    <ul class="similars_list">
+    {% for room in rooms %}
+        <li class="similars_list_item">
+            <p>{{ room }}</p>
+        </li>
+    {% endfor %}
+    </ul>
+  </div>
+  
+  {% call super() %}
+{% endblock %}
+

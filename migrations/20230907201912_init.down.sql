@@ -1,5 +1,4 @@
 -- Add down migration script here
-DROP TABLE IF EXISTS article_categories;
 DROP TABLE IF EXISTS engagements;
 DROP TABLE IF EXISTS reset_password_requests;
 DROP TABLE IF EXISTS messages;
@@ -30,6 +29,9 @@ DROP TABLE IF EXISTS authors;
 DROP TABLE IF EXISTS writing_samples;
 DROP TABLE IF EXISTS entry_types;
 DROP TABLE IF EXISTS entry_categories;
+DROP TABLE IF EXISTS article_categories;
+DROP TABLE IF EXISTS room_categories;
+DROP TABLE IF EXISTS rooms;
 DROP TABLE IF EXISTS users;
 -- This needs to be last
 DROP TABLE IF EXISTS accounts;
