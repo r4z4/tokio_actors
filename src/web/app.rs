@@ -21,7 +21,9 @@ use crate::{
     users::{AuthSession, Backend},
     web::{api, auth, protected, public, ws::read_and_send_messages},
 };
+use chrono::Utc;
 use fastembed::TextEmbedding;
+use rand::Rng;
 use ::time::Duration;
 use askama::Template;
 use axum::http::{
@@ -37,6 +39,7 @@ use axum::{
     routing::{get, post},
     Extension, Json, Router,
 };
+use rand::prelude::SliceRandom;
 use axum_login::{
     login_required,
     tower_sessions::{ExpiredDeletion, Expiry, PostgresStore, SessionManagerLayer},
@@ -64,6 +67,7 @@ use std::{
     net::SocketAddr,
     sync::{Arc, Mutex, RwLock},
 };
+use lazy_static::lazy_static;
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     sync::{broadcast, mpsc, oneshot},
@@ -137,6 +141,83 @@ pub struct PostTemplate<'a> {
 //         Err(_) => println!("yay"),
 //     }
 // }
+
+#[derive(FromRow)]
+pub struct DbMessage {
+    sent_from: i32,
+    sent_to: i32,
+    message_text: String,
+    room_id: i32,
+    sent_at: chrono::DateTime<Utc>
+}
+
+#[derive(FromRow)]
+pub struct DbUser {
+    username: String,
+    password: &'static str,
+    email: String,
+    first_name: String,
+    last_name: String
+}
+
+lazy_static! {
+    /// This is an example for using doc comment attributes
+    static ref PASS: &'static str = "$argon2id$v=19$m=19456,t=2,p=1$3H44ziOiAHHPL3u5x+S+Ag$YowYSA614EokasKaa5BCx+2Dtmyf+53HE+LB3EinfiQ";
+}
+
+fn build_message() -> String {
+    let first = ["Hi","Hey","What","How","Look","I","Sent","Please","Me","You","Need"].choose(&mut rand::thread_rng()).unwrap();
+    let second = ["there","how","when","first","next","lets","together","smart","things","lately"].choose(&mut rand::thread_rng()).unwrap();
+    let third = ["test","case","root","tiles","house","farm","then","joke","lobster","spend","fresh"].choose(&mut rand::thread_rng()).unwrap();
+    let fourth = ["thanks","later","typical","see","pray","lost","dream","still","wonder","play","merge"].choose(&mut rand::thread_rng()).unwrap();
+
+    format!("{} {} {} {}", first, second, third, fourth)
+}
+
+fn insert_messages(num: i32) -> Vec<DbMessage> {
+    let mut rng = rand::thread_rng();
+    // Add one to avoid 0
+    let to = rng.gen_range(0..29) + 1;
+    let from = rng.gen_range(0..29) + 1;
+    let room = rng.gen_range(0..3) + 1;
+    let sent = Utc::now() + chrono::Duration::minutes(rng.gen_range(0..60));
+    let mut msgs = vec![];
+    for _ in 0..num {
+        msgs.push(DbMessage{sent_from: from, sent_to: to, message_text: build_message(), room_id: room, sent_at: sent})
+    }
+    msgs
+}
+
+fn insert_users(num: i32) -> Vec<DbUser> {
+    let first = ["Jim","Steve","Sue","Jen","Rich","Ken","Larry","Lisa","Margaret","Sammy","Stan"].choose(&mut rand::thread_rng()).unwrap();
+    let last = ["Rodgers","Smith","Lewis","Trumpet","Boyd","Carlson","Livers","Rivers","Ryan","Marshall","Reynolds"].choose(&mut rand::thread_rng()).unwrap();
+    let mut users = vec![];
+    for _ in 0..num {
+        users.push(DbUser{username: format!("{}{}", first.chars().nth(3).unwrap(), last.chars().nth(3).unwrap()), password: &PASS, email: format!("{}_{}@example.com", first.chars().nth(2).unwrap().to_lowercase(), last).to_owned(), first_name: format!("{}", first), last_name: format!("{}", last)})
+    }
+    users
+}
+
+async fn generate_mocks(pool: &Pool<Postgres>) {
+    
+    let users = insert_users(40);
+    let mut user_query_builder = QueryBuilder::new("INSERT INTO users(username, password, email, first_name, last_name) ");
+    user_query_builder.push_values(users, |mut b, new_user| {
+        b.push_bind(new_user.username).push_bind(new_user.password).push_bind(new_user.email).push_bind(new_user.first_name).push_bind(new_user.last_name);
+    });
+    let user_query = user_query_builder.build();
+    user_query.execute(pool).await;
+
+    let messages = insert_messages(600);
+    let mut message_query_builder = QueryBuilder::new("INSERT INTO messages(sent_from, sent_to, message_text, room_id, sent_at) ");
+    message_query_builder.push_values(messages, |mut b, new_msg| {
+        b.push_bind(new_msg.sent_from).push_bind(new_msg.sent_to).push_bind(new_msg.message_text).push_bind(new_msg.room_id).push_bind(new_msg.sent_at);
+    });
+    let message_query = message_query_builder.build();
+    message_query.execute(pool).await;
+}
+
+
 pub struct FamousEntry {
     author_id: i32,
     entry_type_id: i32,
@@ -254,6 +335,8 @@ impl App {
             let query = query_builder.build();
             query.execute(&pool).await;
         }
+
+        generate_mocks(&pool);
 
         Ok(Self { pool, r_pool })
     }
